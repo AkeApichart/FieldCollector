@@ -25,18 +25,18 @@ html,body{height:100%;overflow:hidden;background:var(--bg)}
 #app{font-family:var(--sans);background:var(--bg);color:var(--text);height:100%;display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative}
 .screen{display:none;flex-direction:column;flex:1;min-height:0}
 .screen.active{display:flex}
-.header{padding:calc(var(--safe-top) + 12px) 18px 12px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.header{padding:calc(var(--safe-top)+12px) 18px 12px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
 .header-back{width:36px;height:36px;border-radius:10px;background:var(--card);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--muted);flex-shrink:0}
 .header-info{flex:1;min-width:0}
 .header-title{font-size:16px;font-weight:600}
 .header-sub{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:1px}
 .content{flex:1;overflow-y:auto;padding:16px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .content::-webkit-scrollbar{display:none}
-.bottom-nav{display:flex;background:var(--surface);border-top:1px solid var(--border);padding:8px 0 calc(var(--safe-bottom) + 8px);flex-shrink:0}
+.bottom-nav{display:flex;background:var(--surface);border-top:1px solid var(--border);padding:8px 0 calc(var(--safe-bottom)+8px);flex-shrink:0}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:6px;border:none;background:none;color:var(--muted);font-family:var(--sans);font-size:10px;font-weight:500}
 .nav-item.active{color:var(--accent)}
 .nav-icon{font-size:20px}
-.fab{position:absolute;bottom:calc(var(--safe-bottom) + 72px);right:16px;width:54px;height:54px;border-radius:16px;background:var(--accent);color:#000;border:none;cursor:pointer;font-size:28px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(240,165,0,.45);z-index:10;font-weight:700}
+.fab{position:absolute;bottom:calc(var(--safe-bottom)+72px);right:16px;width:54px;height:54px;border-radius:16px;background:var(--accent);color:#000;border:none;cursor:pointer;font-size:28px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(240,165,0,.45);z-index:10;font-weight:700}
 .fab:active{transform:scale(.95)}
 .badge{font-family:var(--mono);font-size:9px;font-weight:500;padding:2px 8px;border-radius:4px;background:rgba(240,165,0,.12);color:var(--accent);border:1px solid rgba(240,165,0,.25);white-space:nowrap}
 .badge.blue{background:rgba(59,130,246,.12);color:var(--accent2);border-color:rgba(59,130,246,.25)}
@@ -64,22 +64,43 @@ html,body{height:100%;overflow:hidden;background:var(--bg)}
 .btn-primary:active{opacity:.85}
 .btn-secondary{background:transparent;color:var(--text);border:1px solid var(--border);margin-top:8px}
 .btn-word{background:rgba(59,130,246,.1);color:var(--accent2);border:1px solid rgba(59,130,246,.3);margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px}
-.btn-word:disabled{opacity:.4;pointer-events:none}
+.btn-word:active{background:rgba(59,130,246,.18)}
 .btn-danger{background:rgba(239,68,68,.08);color:var(--danger);border:1px solid rgba(239,68,68,.25);margin-top:8px}
 .divider{height:1px;background:var(--border);margin:14px 0}
 .section-title-sm{font-family:var(--mono);font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
 .info-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
 .info-chip{font-family:var(--mono);font-size:10px;color:var(--muted);background:var(--card);border:1px solid var(--border);border-radius:6px;padding:3px 10px}
-.report-thumbs{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px}
-.report-thumb{width:88px;height:88px;border-radius:10px;object-fit:cover;border:1px solid var(--border);flex-shrink:0}
+.detail-photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.detail-photo-cell{aspect-ratio:1;border-radius:12px;overflow:hidden;cursor:pointer;position:relative;background:var(--border)}
+.detail-photo-cell img{width:100%;height:100%;object-fit:cover;display:block}
+.detail-photo-cell:active img{transform:scale(.96)}
+.detail-photo-cell .photo-index{position:absolute;bottom:6px;right:8px;font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.85);background:rgba(0,0,0,.5);border-radius:4px;padding:1px 5px}
+/* Lightbox */
+#lightbox{position:fixed;inset:0;background:#000;z-index:500;display:none;flex-direction:column;touch-action:none;user-select:none;-webkit-user-select:none}
+#lightbox.open{display:flex}
+#lb-header{position:absolute;top:0;left:0;right:0;padding:calc(var(--safe-top)+12px) 16px 12px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(to bottom,rgba(0,0,0,.7),transparent);z-index:2}
+#lb-counter{font-family:var(--mono);font-size:13px;color:rgba(255,255,255,.8)}
+#lb-close{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.15);border:none;cursor:pointer;color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center}
+#lb-track{flex:1;display:flex;align-items:center;overflow:hidden;position:relative}
+#lb-slides{display:flex;height:100%;transition:transform .3s cubic-bezier(.4,0,.2,1);will-change:transform}
+.lb-slide{flex-shrink:0;width:100vw;max-width:480px;display:flex;align-items:center;justify-content:center;padding:60px 8px}
+.lb-slide img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px;display:block}
+.lb-arrow{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.15);border:none;cursor:pointer;color:#fff;font-size:20px;z-index:3;display:flex;align-items:center;justify-content:center}
+#lb-prev{left:8px}
+#lb-next{right:8px}
+#lb-footer{position:absolute;bottom:0;left:0;right:0;padding:12px 16px calc(var(--safe-bottom)+12px);background:linear-gradient(to top,rgba(0,0,0,.7),transparent);display:flex;align-items:center;justify-content:space-between;z-index:2}
+#lb-dots{display:flex;gap:6px;justify-content:center;flex:1}
+.lb-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.3);transition:all .2s}
+.lb-dot.active{background:#fff;width:18px;border-radius:3px}
+#lb-download{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.15);border:none;cursor:pointer;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center}
 .proj-group{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px}
 .proj-group-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .proj-group-name{font-weight:600;font-size:15px}
 .proj-group-meta{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px}
 .entry-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(42,48,69,.5);cursor:pointer}
 .entry-row:last-of-type{border-bottom:none}
-.entry-thumb{width:40px;height:40px;border-radius:8px;object-fit:cover;flex-shrink:0;border:1px solid var(--border)}
-.entry-thumb-ph{width:40px;height:40px;border-radius:8px;background:var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px}
+.entry-thumb{width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;border:1px solid var(--border)}
+.entry-thumb-ph{width:44px;height:44px;border-radius:8px;background:var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px}
 .entry-title{font-size:14px;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .entry-meta{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px}
 .log-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
@@ -96,21 +117,16 @@ html,body{height:100%;overflow:hidden;background:var(--bg)}
 #overlay.show{display:flex}
 .spinner{width:44px;height:44px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
 .overlay-msg{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:center;max-width:280px;line-height:1.7}
-#toast{position:fixed;bottom:calc(var(--safe-bottom) + 90px);left:50%;transform:translateX(-50%) translateY(16px);background:var(--surface);color:var(--text);border:1px solid var(--border);font-size:13px;padding:10px 18px;border-radius:24px;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;z-index:999;font-family:var(--sans)}
+#toast{position:fixed;bottom:calc(var(--safe-bottom)+90px);left:50%;transform:translateX(-50%) translateY(16px);background:var(--surface);color:var(--text);border:1px solid var(--border);font-size:13px;padding:10px 18px;border-radius:24px;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;z-index:999;font-family:var(--sans)}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #toast.success{border-color:rgba(34,197,94,.4);color:var(--success)}
 #toast.error{border-color:rgba(239,68,68,.4);color:var(--danger)}
 .section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .section-label{font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
 .link-btn{font-size:12px;background:none;border:none;color:var(--accent2);cursor:pointer;font-family:var(--sans)}
-/* docx loading bar */
-#lib-bar{height:3px;background:var(--accent);width:0%;transition:width .4s;position:fixed;top:0;left:0;z-index:400;border-radius:0 2px 2px 0}
 </style>
 </head>
 <body>
-
-<div id="lib-bar"></div>
-
 <div id="screen-loading">
   <div style="font-size:48px">📋</div>
   <div style="font-size:18px;font-weight:600;color:var(--text)">Field Collector</div>
@@ -200,7 +216,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg)}
   </div>
   <div class="content">
     <div class="info-row" id="detail-chips"></div>
-    <div class="report-thumbs" id="detail-thumbs"></div>
+    <div class="section-title-sm" id="detail-photo-label" style="display:none">รูปภาพ — แตะเพื่อดูเต็มจอ</div>
+    <div class="detail-photo-grid" id="detail-photo-grid"></div>
     <div class="section-title-sm">รายละเอียด</div>
     <div id="detail-body" style="font-size:15px;line-height:1.75;color:var(--text);white-space:pre-wrap;margin-bottom:20px"></div>
     <div class="divider"></div>
@@ -228,463 +245,424 @@ html,body{height:100%;overflow:hidden;background:var(--bg)}
 
 <div id="overlay"><div class="spinner"></div><div class="overlay-msg" id="overlay-msg">กำลังประมวลผล...</div></div>
 <div id="toast"></div>
+
+<!-- LIGHTBOX -->
+<div id="lightbox">
+  <div id="lb-header">
+    <span id="lb-counter"></span>
+    <button id="lb-close" onclick="closeLightbox()">✕</button>
+  </div>
+  <div id="lb-track">
+    <button class="lb-arrow" id="lb-prev" onclick="lbGo(-1)">‹</button>
+    <div id="lb-slides"></div>
+    <button class="lb-arrow" id="lb-next" onclick="lbGo(1)">›</button>
+  </div>
+  <div id="lb-footer">
+    <div style="width:36px"></div>
+    <div id="lb-dots"></div>
+    <button id="lb-download" onclick="lbDownload()">⬇</button>
+  </div>
+</div>
 </div>
 
 <script>
-// ══════════════════════════════════════
-//  โหลด docx library แบบ dynamic
-//  ลอง 3 CDN ตามลำดับ
-// ══════════════════════════════════════
-const DOCX_CDNS = [
-  'https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.min.js',
-  'https://unpkg.com/docx@8.5.0/build/index.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/index.min.js'
-];
+// ═══════════════════════════════════════════════
+//  ZIP writer (pure JS — ไม่ต้องโหลด library)
+// ═══════════════════════════════════════════════
+const CRC_TABLE = (()=>{
+  const t=new Uint32Array(256);
+  for(let i=0;i<256;i++){let c=i;for(let j=0;j<8;j++)c=(c&1)?0xEDB88320^(c>>>1):c>>>1;t[i]=c;}
+  return t;
+})();
 
-let docxLib = null;  // จะถูก set หลัง library โหลดสำเร็จ
-
-function loadScript(url) {
-  return new Promise((res, rej) => {
-    const s = document.createElement('script');
-    s.src = url;
-    s.onload  = () => res();
-    s.onerror = () => rej(new Error('load fail: ' + url));
-    document.head.appendChild(s);
-  });
+function crc32(data){
+  let c=0xFFFFFFFF;
+  for(let i=0;i<data.length;i++) c=CRC_TABLE[(c^data[i])&0xFF]^(c>>>8);
+  return (c^0xFFFFFFFF)>>>0;
 }
 
-async function loadDocx() {
-  for (let i = 0; i < DOCX_CDNS.length; i++) {
-    try {
-      setMsg(`โหลด library... (${i+1}/${DOCX_CDNS.length})`);
-      setBar((i+1) / DOCX_CDNS.length * 40);
-      await loadScript(DOCX_CDNS[i]);
-      if (window.docx) { docxLib = window.docx; return true; }
-    } catch(e) { /* ลอง CDN ถัดไป */ }
+class ZipWriter {
+  constructor(){ this.files=[]; this.offset=0; }
+
+  add(name, data){ // data = Uint8Array
+    const nb=new TextEncoder().encode(name);
+    const cr=crc32(data);
+    const lh=new Uint8Array(30+nb.length);
+    const lv=new DataView(lh.buffer);
+    lv.setUint32(0,0x04034b50,true); lv.setUint16(4,20,true);
+    lv.setUint16(6,0,true); lv.setUint16(8,0,true);
+    lv.setUint16(10,0,true); lv.setUint16(12,0,true);
+    lv.setUint32(14,cr,true); lv.setUint32(18,data.length,true);
+    lv.setUint32(22,data.length,true); lv.setUint16(26,nb.length,true);
+    lv.setUint16(28,0,true); lh.set(nb,30);
+    this.files.push({lh,data,nb,cr,sz:data.length,off:this.offset});
+    this.offset+=lh.length+data.length;
   }
-  return false;
+
+  build(){
+    const lp=[],cd=[];
+    for(const f of this.files){
+      lp.push(f.lh,f.data);
+      const c=new Uint8Array(46+f.nb.length);
+      const v=new DataView(c.buffer);
+      v.setUint32(0,0x02014b50,true); v.setUint16(4,20,true); v.setUint16(6,20,true);
+      v.setUint16(8,0,true); v.setUint16(10,0,true); v.setUint16(12,0,true);
+      v.setUint16(14,0,true); v.setUint32(16,f.cr,true); v.setUint32(20,f.sz,true);
+      v.setUint32(24,f.sz,true); v.setUint16(28,f.nb.length,true); v.setUint16(30,0,true);
+      v.setUint16(32,0,true); v.setUint16(34,0,true); v.setUint16(36,0,true);
+      v.setUint32(38,0,true); v.setUint32(42,f.off,true); c.set(f.nb,46);
+      cd.push(c);
+    }
+    const cdOff=lp.reduce((s,p)=>s+p.length,0);
+    const cdSz=cd.reduce((s,p)=>s+p.length,0);
+    const eocd=new Uint8Array(22); const ev=new DataView(eocd.buffer);
+    ev.setUint32(0,0x06054b50,true); ev.setUint16(8,this.files.length,true);
+    ev.setUint16(10,this.files.length,true); ev.setUint32(12,cdSz,true);
+    ev.setUint32(16,cdOff,true);
+    const all=[...lp,...cd,eocd];
+    const tot=all.reduce((s,p)=>s+p.length,0);
+    const out=new Uint8Array(tot); let pos=0;
+    for(const p of all){out.set(p,pos);pos+=p.length;}
+    return out;
+  }
 }
 
-function setBar(pct) { document.getElementById('lib-bar').style.width = pct + '%'; }
-function setMsg(m)   { document.getElementById('loading-msg').textContent = m; }
+// ═══════════════════════════════════════════════
+//  DOCX builder (pure JS — ไม่ต้องโหลด library)
+// ═══════════════════════════════════════════════
+function xe(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function enc(s){ return new TextEncoder().encode(s); }
 
-// ══════════════════════════════════════
-//  IndexedDB helpers
-// ══════════════════════════════════════
-const DB_NAME = 'FieldCollectorDB', DB_VER = 1;
-let db = null;
-
-function openDB() {
-  return new Promise((res, rej) => {
-    const req = indexedDB.open(DB_NAME, DB_VER);
-    req.onupgradeneeded = e => {
-      const d = e.target.result;
-      if (!d.objectStoreNames.contains('entries')) {
-        const s = d.createObjectStore('entries', { keyPath: 'id' });
-        s.createIndex('project', 'project', { unique: false });
-      }
-      if (!d.objectStoreNames.contains('logs'))
-        d.createObjectStore('logs', { keyPath: 'id', autoIncrement: true });
-      if (!d.objectStoreNames.contains('projects'))
-        d.createObjectStore('projects', { keyPath: 'name' });
-    };
-    req.onsuccess = e => res(e.target.result);
-    req.onerror   = e => rej(e.target.error);
+function getImgDims(dataURL){
+  return new Promise(res=>{
+    const i=new Image();
+    i.onload=()=>res({w:i.naturalWidth,h:i.naturalHeight});
+    i.onerror=()=>res({w:800,h:600});
+    i.src=dataURL;
   });
 }
 
-const idbTx     = (store, mode='readonly') => db.transaction(store, mode).objectStore(store);
-const dbGetAll  = store => new Promise((res,rej) => { const r=idbTx(store).getAll(); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });
-const dbPut     = (store,obj) => new Promise((res,rej) => { const r=idbTx(store,'readwrite').put(obj); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });
-const dbDelete  = (store,key) => new Promise((res,rej) => { const r=idbTx(store,'readwrite').delete(key); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); });
+function dataURLtoBytes(dataURL){
+  const b64=dataURL.split(',')[1], bin=atob(b64), a=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) a[i]=bin.charCodeAt(i);
+  return a;
+}
 
-// ══════════════════════════════════════
-//  State
-// ══════════════════════════════════════
-const MAX = 5;
-const S = { entries:[], projects:[], logs:[], photos:[], currentSlot:-1, currentDetailId:null, docxReady:false };
+async function buildDocx(projName, entries){
+  const zip=new ZipWriter();
 
-// ══════════════════════════════════════
-//  Startup — โหลด library + DB พร้อมกัน
-// ══════════════════════════════════════
-window.addEventListener('load', async () => {
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+  // Pre-collect all images with rIds
+  let imgs=[];
+  let rId=2;
+  for(let ei=0;ei<entries.length;ei++){
+    for(let pi=0;pi<(entries[ei].photos||[]).length;pi++){
+      const p=entries[ei].photos[pi];
+      const dims=await getImgDims(p.dataURL);
+      const bytes=dataURLtoBytes(p.dataURL);
+      // Scale to max width 5.4 inch (4953600 EMU), maintain aspect
+      const maxEMU=4953600;
+      const scale=Math.min(maxEMU/(dims.w*9525), maxEMU/(dims.h*9525), 1);
+      imgs.push({
+        rId:'rId'+rId++, name:`image${imgs.length+1}.jpg`,
+        bytes, ei, pi,
+        cx:Math.round(dims.w*9525*scale),
+        cy:Math.round(dims.h*9525*scale)
+      });
+    }
+  }
 
-  try {
-    // โหลด library และ DB พร้อมกัน
-    const [libOk] = await Promise.all([
-      loadDocx(),
-      (async () => {
-        setMsg('เปิดฐานข้อมูล...');
-        db = await openDB();
-        setMsg('โหลดข้อมูลเก่า...');
-        await loadAll();
-      })()
-    ]);
+  // document.xml
+  let body='';
+  const dateStr=new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
 
-    S.docxReady = libOk;
-    setBar(100);
+  // Cover
+  body+=`<w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="48"/><w:szCs w:val="48"/></w:rPr><w:t>${xe(projName)}</w:t></w:r></w:p>`;
+  body+=`<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:after="360"/></w:pPr><w:r><w:rPr><w:color w:val="888888"/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr><w:t>รายงานภาคสนาม · ${entries.length} รายการ · ${xe(dateStr)}</w:t></w:r></w:p>`;
+  body+=`<w:p><w:pPr><w:spacing w:after="480"/><w:pBdr><w:bottom w:val="single" w:sz="8" w:space="1" w:color="F0A500"/></w:pBdr></w:pPr></w:p>`;
 
-    if (!libOk) {
-      // แอปใช้งานได้ แต่ export Word ไม่ได้ — แจ้งให้รู้
-      console.warn('docx library ไม่สามารถโหลดได้ Export Word จะไม่ทำงานแบบ offline');
+  for(let ei=0;ei<entries.length;ei++){
+    const e=entries[ei];
+    // Date/time stamp
+    body+=`<w:p><w:pPr><w:spacing w:before="${ei>0?480:0}" w:after="60"/></w:pPr><w:r><w:rPr><w:color w:val="888888"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>${xe(e.date)}   เวลา ${xe(e.time)}</w:t></w:r></w:p>`;
+    // Topic
+    body+=`<w:p><w:pPr><w:spacing w:before="60" w:after="180"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="36"/><w:szCs w:val="36"/></w:rPr><w:t>${xe(e.topic)}</w:t></w:r></w:p>`;
+
+    // Photos
+    const entryImgs=imgs.filter(x=>x.ei===ei);
+    for(const img of entryImgs){
+      const iid=ei*10+img.pi+1;
+      body+=`<w:p><w:pPr><w:spacing w:before="${img.pi===0?80:200}" w:after="0"/></w:pPr><w:r><w:drawing>`;
+      body+=`<wp:inline xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing">`;
+      body+=`<wp:extent cx="${img.cx}" cy="${img.cy}"/>`;
+      body+=`<wp:docPr id="${iid}" name="Img${iid}"/>`;
+      body+=`<wp:cNvGraphicFramePr/>`;
+      body+=`<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">`;
+      body+=`<a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">`;
+      body+=`<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">`;
+      body+=`<pic:nvPicPr><pic:cNvPr id="${iid}" name="Img${iid}"/><pic:cNvPicPr/></pic:nvPicPr>`;
+      body+=`<pic:blipFill><a:blip r:embed="${img.rId}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>`;
+      body+=`<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${img.cx}" cy="${img.cy}"/></a:xfrm>`;
+      body+=`<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>`;
+      body+=`</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`;
+      // Caption
+      body+=`<w:p><w:pPr><w:spacing w:before="40" w:after="160"/></w:pPr><w:r><w:rPr><w:i/><w:color w:val="888888"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t>รูปที่ ${img.pi+1}  ·  ${xe(e.date)} ${xe(e.time)}</w:t></w:r></w:p>`;
     }
 
-    document.getElementById('db-status-label').textContent = `บันทึกแล้ว ${S.entries.length} รายการ`;
-    document.getElementById('screen-loading').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-    document.getElementById('lib-bar').style.display = 'none';
+    // Detail text
+    if(e.detail){
+      body+=`<w:p><w:pPr><w:spacing w:before="140" w:after="80"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="26"/><w:szCs w:val="26"/><w:color w:val="333333"/></w:rPr><w:t>รายละเอียด</w:t></w:r></w:p>`;
+      for(const line of e.detail.split('\n')){
+        body+=`<w:p><w:pPr><w:spacing w:after="60"/></w:pPr><w:r><w:rPr><w:sz w:val="26"/><w:szCs w:val="26"/></w:rPr><w:t xml:space="preserve">${xe(line||' ')}</w:t></w:r></w:p>`;
+      }
+    }
 
-    renderProjects(); renderSlots(); updateStats();
-  } catch(err) {
-    setMsg('❌ เกิดข้อผิดพลาด: ' + err.message);
-    console.error(err);
+    // Divider
+    if(ei<entries.length-1){
+      body+=`<w:p><w:pPr><w:spacing w:before="300" w:after="0"/><w:pBdr><w:bottom w:val="single" w:sz="1" w:space="1" w:color="DDDDDD"/></w:pBdr></w:pPr></w:p>`;
+    }
   }
+
+  const docXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"
+  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+  xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+  xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+  xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+  xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">
+<w:body>${body}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134"/></w:sectPr></w:body></w:document>`;
+
+  // document.xml.rels
+  let rels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>`;
+  for(const img of imgs) rels+=`\n<Relationship Id="${img.rId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/${img.name}"/>`;
+  rels+=`\n</Relationships>`;
+
+  // [Content_Types].xml
+  const ct=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Default Extension="jpg" ContentType="image/jpeg"/>
+<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+</Types>`;
+
+  // _rels/.rels
+  const rootRels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`;
+
+  // styles.xml
+  const styles=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:docDefaults><w:rPrDefault><w:rPr>
+<w:rFonts w:ascii="Angsana New" w:hAnsi="Angsana New" w:cs="Angsana New"/>
+<w:sz w:val="26"/><w:szCs w:val="26"/>
+</w:rPr></w:rPrDefault></w:docDefaults>
+</w:styles>`;
+
+  // Assemble ZIP
+  zip.add('[Content_Types].xml', enc(ct));
+  zip.add('_rels/.rels', enc(rootRels));
+  zip.add('word/document.xml', enc(docXml));
+  zip.add('word/_rels/document.xml.rels', enc(rels));
+  zip.add('word/styles.xml', enc(styles));
+  for(const img of imgs) zip.add(`word/media/${img.name}`, img.bytes);
+
+  return new Blob([zip.build()],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+}
+
+// ═══════════════════════════════════════════════
+//  IndexedDB
+// ═══════════════════════════════════════════════
+const DB_NAME='FieldCollectorDB',DB_VER=1;
+let db=null;
+function openDB(){ return new Promise((res,rej)=>{ const req=indexedDB.open(DB_NAME,DB_VER); req.onupgradeneeded=e=>{ const d=e.target.result; if(!d.objectStoreNames.contains('entries')){const s=d.createObjectStore('entries',{keyPath:'id'});s.createIndex('project','project',{unique:false});} if(!d.objectStoreNames.contains('logs')) d.createObjectStore('logs',{keyPath:'id',autoIncrement:true}); if(!d.objectStoreNames.contains('projects')) d.createObjectStore('projects',{keyPath:'name'}); }; req.onsuccess=e=>res(e.target.result); req.onerror=e=>rej(e.target.error); }); }
+const idbTx=(store,mode='readonly')=>db.transaction(store,mode).objectStore(store);
+const dbGetAll=store=>new Promise((res,rej)=>{const r=idbTx(store).getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
+const dbPut=(store,obj)=>new Promise((res,rej)=>{const r=idbTx(store,'readwrite').put(obj);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
+const dbDelete=(store,key)=>new Promise((res,rej)=>{const r=idbTx(store,'readwrite').delete(key);r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});
+
+const MAX=5;
+const S={entries:[],projects:[],logs:[],photos:[],currentSlot:-1,currentDetailId:null};
+
+window.addEventListener('load',async()=>{
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+  try{
+    document.getElementById('loading-msg').textContent='เปิดฐานข้อมูล...';
+    db=await openDB();
+    document.getElementById('loading-msg').textContent='โหลดข้อมูล...';
+    await loadAll();
+    document.getElementById('db-status-label').textContent=`บันทึกแล้ว ${S.entries.length} รายการ`;
+    document.getElementById('screen-loading').style.display='none';
+    document.getElementById('app').style.display='flex';
+    renderProjects(); renderSlots(); updateStats();
+  }catch(err){ document.getElementById('loading-msg').textContent='❌ '+err.message; }
 });
 
-async function loadAll() {
-  const entries = await dbGetAll('entries');
-  S.entries  = entries.sort((a,b) => b.timestamp_iso.localeCompare(a.timestamp_iso));
-  const projs = await dbGetAll('projects');
-  S.projects = projs.map(p => p.name);
-  const logs  = await dbGetAll('logs');
-  S.logs      = logs.sort((a,b) => (b.id||0)-(a.id||0)).slice(0,300);
-  // ใส่โครงการใน dropdown
-  const sel = document.getElementById('proj-select');
-  while (sel.options.length > 2) sel.remove(2);
-  S.projects.forEach(p => { const o=document.createElement('option'); o.value=p; o.textContent=p; sel.appendChild(o); });
-}
-
-// ══════════════════════════════════════
-//  Navigation
-// ══════════════════════════════════════
-function goTo(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  if (id === 'screen-capture') initCapture();
-}
-function switchTab(t) { goTo({home:'screen-home',log:'screen-log'}[t]); if(t==='log') renderLog(); }
-
-// ══════════════════════════════════════
-//  Timestamp / filename
-// ══════════════════════════════════════
-function nowObj() {
-  const d=new Date(), p=n=>String(n).padStart(2,'0');
-  return { Y:d.getFullYear(), M:p(d.getMonth()+1), D:p(d.getDate()),
-    h:p(d.getHours()), m:p(d.getMinutes()), s:p(d.getSeconds()),
-    display:d.toLocaleString('th-TH'), iso:d.toISOString(),
-    fn:`${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}` };
-}
-
-// ══════════════════════════════════════
-//  Capture form
-// ══════════════════════════════════════
-function initCapture() {
-  const t=nowObj();
-  document.getElementById('capture-ts').textContent=`${t.Y}-${t.M}-${t.D}  ${t.h}:${t.m}`;
-  S.photos=[]; S.currentSlot=-1;
-  ['topic-input','detail-text'].forEach(id => document.getElementById(id).value='');
-  document.getElementById('photo-input').value='';
-  document.getElementById('new-proj-wrap').style.display='none';
-  renderSlots();
-}
-function onProjChange(sel) { document.getElementById('new-proj-wrap').style.display=sel.value==='__new__'?'block':'none'; }
-function getProjName() {
+async function loadAll(){
+  const entries=await dbGetAll('entries'); S.entries=entries.sort((a,b)=>b.timestamp_iso.localeCompare(a.timestamp_iso));
+  const projs=await dbGetAll('projects'); S.projects=projs.map(p=>p.name);
+  const logs=await dbGetAll('logs'); S.logs=logs.sort((a,b)=>(b.id||0)-(a.id||0)).slice(0,300);
   const sel=document.getElementById('proj-select');
-  return sel.value==='__new__'?(document.getElementById('new-proj-name').value.trim()||'โครงการใหม่'):sel.value;
+  while(sel.options.length>2) sel.remove(2);
+  S.projects.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;sel.appendChild(o);});
 }
-function renderSlots() {
-  const g=document.getElementById('photo-grid'); g.innerHTML='';
-  for(let i=0;i<MAX;i++){
-    const s=document.createElement('div');
-    s.className='photo-slot'+(S.photos[i]?' filled':'');
-    if(S.photos[i]){
-      s.innerHTML=`<img src="${S.photos[i].dataURL}"><span class="slot-num">${i+1}</span><button class="slot-del" onclick="rmPhoto(event,${i})">✕</button>`;
-    } else { s.innerHTML='<span class="slot-add">📷</span>'; s.onclick=()=>openSlot(i); }
-    g.appendChild(s);
-  }
-  document.getElementById('photo-count-label').textContent=`${S.photos.filter(Boolean).length} / ${MAX} รูป`;
-}
-function openSlot(i) {
-  if(S.photos.filter(Boolean).length>=MAX){ showToast('ครบ 5 รูปแล้ว','error'); return; }
-  S.currentSlot=i; document.getElementById('photo-input').click();
-}
-function handlePhoto(input) {
-  const file=input.files[0]; if(!file||!file.type.startsWith('image/')) return;
-  const r=new FileReader();
-  r.onload=e=>compress(e.target.result,1200,.82).then(url=>{
-    const idx=S.currentSlot>=0?S.currentSlot:S.photos.filter(Boolean).length;
-    if(idx>=MAX) return;
-    S.photos[idx]={dataURL:url,filename:file.name,mime:'image/jpeg',sizeKB:Math.round(url.length*.75/1024)};
-    renderSlots(); input.value=''; S.currentSlot=-1;
-  });
-  r.readAsDataURL(file);
-}
-function compress(src,maxPx,q){
-  return new Promise(res=>{
-    const img=new Image();
-    img.onload=()=>{
-      let w=img.width,h=img.height;
-      if(w>maxPx||h>maxPx){const r=Math.min(maxPx/w,maxPx/h);w=Math.round(w*r);h=Math.round(h*r);}
-      const c=document.createElement('canvas'); c.width=w; c.height=h;
-      c.getContext('2d').drawImage(img,0,0,w,h);
-      res(c.toDataURL('image/jpeg',q));
-    };
-    img.src=src;
-  });
-}
-function rmPhoto(e,i){e.stopPropagation();S.photos[i]=null;S.photos=S.photos.filter(Boolean);renderSlots();}
 
-// ══════════════════════════════════════
-//  Submit → IndexedDB
-// ══════════════════════════════════════
-async function submitEntry() {
-  const proj=getProjName(), topic=document.getElementById('topic-input').value.trim();
-  const detail=document.getElementById('detail-text').value.trim(), filled=S.photos.filter(Boolean);
-  if(!proj)  { showToast('⚠ เลือกโครงการก่อน','error'); return; }
-  if(!topic) { showToast('⚠ ใส่หัวข้อก่อน','error'); return; }
-  if(!detail&&!filled.length){ showToast('⚠ เพิ่มรูปหรือรายละเอียด','error'); return; }
+function goTo(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); if(id==='screen-capture') initCapture(); }
+function switchTab(t){ goTo({home:'screen-home',log:'screen-log'}[t]); if(t==='log') renderLog(); }
+function nowObj(){ const d=new Date(),p=n=>String(n).padStart(2,'0'); return {Y:d.getFullYear(),M:p(d.getMonth()+1),D:p(d.getDate()),h:p(d.getHours()),m:p(d.getMinutes()),s:p(d.getSeconds()),display:d.toLocaleString('th-TH'),iso:d.toISOString(),fn:`${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`}; }
+
+function initCapture(){ const t=nowObj(); document.getElementById('capture-ts').textContent=`${t.Y}-${t.M}-${t.D}  ${t.h}:${t.m}`; S.photos=[];S.currentSlot=-1; ['topic-input','detail-text'].forEach(id=>document.getElementById(id).value=''); document.getElementById('photo-input').value=''; document.getElementById('new-proj-wrap').style.display='none'; renderSlots(); }
+function onProjChange(sel){ document.getElementById('new-proj-wrap').style.display=sel.value==='__new__'?'block':'none'; }
+function getProjName(){ const sel=document.getElementById('proj-select'); return sel.value==='__new__'?(document.getElementById('new-proj-name').value.trim()||'โครงการใหม่'):sel.value; }
+function renderSlots(){ const g=document.getElementById('photo-grid'); g.innerHTML=''; for(let i=0;i<MAX;i++){ const s=document.createElement('div'); s.className='photo-slot'+(S.photos[i]?' filled':''); if(S.photos[i]){ s.innerHTML=`<img src="${S.photos[i].dataURL}"><span class="slot-num">${i+1}</span><button class="slot-del" onclick="rmPhoto(event,${i})">✕</button>`; }else{ s.innerHTML='<span class="slot-add">📷</span>'; s.onclick=()=>openSlot(i); } g.appendChild(s); } document.getElementById('photo-count-label').textContent=`${S.photos.filter(Boolean).length} / ${MAX} รูป`; }
+function openSlot(i){ if(S.photos.filter(Boolean).length>=MAX){showToast('ครบ 5 รูปแล้ว','error');return;} S.currentSlot=i; document.getElementById('photo-input').click(); }
+function handlePhoto(input){ const file=input.files[0]; if(!file||!file.type.startsWith('image/')) return; const r=new FileReader(); r.onload=e=>compress(e.target.result,1200,.82).then(url=>{ const idx=S.currentSlot>=0?S.currentSlot:S.photos.filter(Boolean).length; if(idx>=MAX) return; S.photos[idx]={dataURL:url,filename:file.name}; renderSlots(); input.value=''; S.currentSlot=-1; }); r.readAsDataURL(file); }
+function compress(src,maxPx,q){ return new Promise(res=>{ const img=new Image(); img.onload=()=>{ let w=img.width,h=img.height; if(w>maxPx||h>maxPx){const r=Math.min(maxPx/w,maxPx/h);w=Math.round(w*r);h=Math.round(h*r);} const c=document.createElement('canvas'); c.width=w;c.height=h; c.getContext('2d').drawImage(img,0,0,w,h); res(c.toDataURL('image/jpeg',q)); }; img.src=src; }); }
+function rmPhoto(e,i){ e.stopPropagation(); S.photos[i]=null; S.photos=S.photos.filter(Boolean); renderSlots(); }
+
+async function submitEntry(){
+  const proj=getProjName(),topic=document.getElementById('topic-input').value.trim(),detail=document.getElementById('detail-text').value.trim(),filled=S.photos.filter(Boolean);
+  if(!proj){showToast('⚠ เลือกโครงการก่อน','error');return;} if(!topic){showToast('⚠ ใส่หัวข้อก่อน','error');return;} if(!detail&&!filled.length){showToast('⚠ เพิ่มรูปหรือรายละเอียด','error');return;}
   const t=nowObj();
-  const entry={
-    id:`${t.fn}_${Math.random().toString(36).slice(2,5)}`,
-    project:proj, topic, detail, photos:[...filled],
-    timestamp_iso:t.iso, timestamp_display:t.display,
-    date:`${t.Y}-${t.M}-${t.D}`, time:`${t.h}:${t.m}:${t.s}`,
-    filename:`${t.fn}_${proj.replace(/[^\w\u0E00-\u0E7Fa-zA-Z0-9]/g,'_')}`
-  };
+  const entry={id:`${t.fn}_${Math.random().toString(36).slice(2,5)}`,project:proj,topic,detail,photos:[...filled],timestamp_iso:t.iso,timestamp_display:t.display,date:`${t.Y}-${t.M}-${t.D}`,time:`${t.h}:${t.m}:${t.s}`,filename:`${t.fn}_${proj.replace(/[^\w\u0E00-\u0E7Fa-zA-Z0-9]/g,'_')}`};
   showOverlay('กำลังบันทึก...');
-  try {
-    await dbPut('entries', entry);
-    if(!S.projects.includes(proj)){
-      await dbPut('projects',{name:proj}); S.projects.push(proj);
-      const sel=document.getElementById('proj-select');
-      const o=document.createElement('option'); o.value=proj; o.textContent=proj; sel.appendChild(o);
-    }
-    const log={time:t.display,msg:`บันทึก: ${proj} — ${topic}`,type:'green'};
-    await dbPut('logs',log); S.logs.unshift(log);
-    S.entries.unshift(entry);
-    updateStats(); renderProjects();
+  try{
+    await dbPut('entries',entry);
+    if(!S.projects.includes(proj)){await dbPut('projects',{name:proj});S.projects.push(proj);const sel=document.getElementById('proj-select');const o=document.createElement('option');o.value=proj;o.textContent=proj;sel.appendChild(o);}
+    const log={time:t.display,msg:`บันทึก: ${proj} — ${topic}`,type:'green'};await dbPut('logs',log);S.logs.unshift(log);
+    S.entries.unshift(entry);updateStats();renderProjects();
     document.getElementById('db-status-label').textContent=`บันทึกแล้ว ${S.entries.length} รายการ`;
-    hideOverlay(); showToast('✓ บันทึกสำเร็จ','success');
-    goTo('screen-home');
-  } catch(err){ hideOverlay(); showToast('❌ '+err.message,'error'); }
+    hideOverlay();showToast('✓ บันทึกสำเร็จ','success');goTo('screen-home');
+  }catch(err){hideOverlay();showToast('❌ '+err.message,'error');}
 }
 
-// ══════════════════════════════════════
-//  Delete
-// ══════════════════════════════════════
-async function deleteCurrentEntry() {
-  const id=S.currentDetailId; if(!id) return;
-  const e=S.entries.find(x=>x.id===id); if(!e) return;
+async function deleteCurrentEntry(){
+  const id=S.currentDetailId;if(!id)return;const e=S.entries.find(x=>x.id===id);if(!e)return;
   if(!confirm(`ลบ "${e.topic}" ใช่ไหม?`)) return;
-  try {
-    await dbDelete('entries',id);
-    S.entries=S.entries.filter(x=>x.id!==id);
-    if(!S.entries.some(x=>x.project===e.project)){
-      await dbDelete('projects',e.project); S.projects=S.projects.filter(p=>p!==e.project);
-      const sel=document.getElementById('proj-select');
-      for(let i=sel.options.length-1;i>=2;i--) if(sel.options[i].value===e.project) sel.remove(i);
-    }
-    const log={time:new Date().toLocaleString('th-TH'),msg:`ลบ: ${e.project} — ${e.topic}`,type:'red'};
-    await dbPut('logs',log); S.logs.unshift(log);
-    updateStats(); renderProjects();
-    document.getElementById('db-status-label').textContent=`บันทึกแล้ว ${S.entries.length} รายการ`;
-    showToast('🗑 ลบเรียบร้อย','success'); goTo('screen-home');
-  } catch(err){ showToast('❌ '+err.message,'error'); }
+  try{
+    await dbDelete('entries',id);S.entries=S.entries.filter(x=>x.id!==id);
+    if(!S.entries.some(x=>x.project===e.project)){await dbDelete('projects',e.project);S.projects=S.projects.filter(p=>p!==e.project);const sel=document.getElementById('proj-select');for(let i=sel.options.length-1;i>=2;i--)if(sel.options[i].value===e.project)sel.remove(i);}
+    const log={time:new Date().toLocaleString('th-TH'),msg:`ลบ: ${e.project} — ${e.topic}`,type:'red'};await dbPut('logs',log);S.logs.unshift(log);
+    updateStats();renderProjects();document.getElementById('db-status-label').textContent=`บันทึกแล้ว ${S.entries.length} รายการ`;
+    showToast('🗑 ลบเรียบร้อย','success');goTo('screen-home');
+  }catch(err){showToast('❌ '+err.message,'error');}
 }
 
-// ══════════════════════════════════════
-//  Render
-// ══════════════════════════════════════
-function renderProjects() {
+function renderProjects(){
   const el=document.getElementById('projects-list');
-  if(!S.entries.length){
-    el.innerHTML='<div class="empty-state"><div class="empty-icon">📷</div>ยังไม่มีข้อมูล<br>กด + เพื่อเริ่มบันทึก</div>';
-    return;
-  }
-  const byP={};
-  S.entries.forEach(e=>{ if(!byP[e.project])byP[e.project]=[]; byP[e.project].push(e); });
+  if(!S.entries.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📷</div>ยังไม่มีข้อมูล<br>กด + เพื่อเริ่มบันทึก</div>';return;}
+  const byP={};S.entries.forEach(e=>{if(!byP[e.project])byP[e.project]=[];byP[e.project].push(e);});
   el.innerHTML=Object.entries(byP).map(([proj,entries])=>`
     <div class="proj-group">
       <div class="proj-group-header">
-        <div>
-          <div class="proj-group-name">📁 ${proj}</div>
-          <div class="proj-group-meta">${entries.length} รายการ · ${entries.reduce((s,e)=>s+(e.photos?.length||0),0)} รูป</div>
-        </div>
+        <div><div class="proj-group-name">📁 ${proj}</div><div class="proj-group-meta">${entries.length} รายการ · ${entries.reduce((s,e)=>s+(e.photos?.length||0),0)} รูป</div></div>
         <div class="badge blue">${entries.length}</div>
       </div>
       ${entries.map(e=>`
         <div class="entry-row" onclick="showDetail('${e.id}')">
           ${e.photos?.length?`<img src="${e.photos[0].dataURL}" class="entry-thumb">`:'<div class="entry-thumb-ph">📷</div>'}
-          <div style="flex:1;min-width:0">
-            <div class="entry-title">${e.topic}</div>
-            <div class="entry-meta">${e.date} ${e.time} · ${e.photos?.length||0} รูป</div>
-          </div>
+          <div style="flex:1;min-width:0"><div class="entry-title">${e.topic}</div><div class="entry-meta">${e.date} ${e.time} · ${e.photos?.length||0} รูป</div></div>
         </div>`).join('')}
-      <button class="btn btn-word" onclick="exportWord('${proj}')" ${S.docxReady?'':'disabled'}>
-        📄 ส่งออก Word — ${proj}
-        ${S.docxReady?'':'<span style="font-size:10px;opacity:.6"> (ต้องใช้ internet)</span>'}
-      </button>
+      <button class="btn btn-word" onclick="exportWord('${proj}')">📄 ส่งออก Word — ${proj}</button>
     </div>`).join('');
 }
 
-function showDetail(id) {
-  const e=S.entries.find(x=>x.id===id); if(!e) return;
+function showDetail(id){
+  const e=S.entries.find(x=>x.id===id);if(!e)return;
   S.currentDetailId=id;
   document.getElementById('detail-title').textContent=e.topic;
   document.getElementById('detail-sub').textContent=`${e.date} · ${e.time}`;
-  document.getElementById('detail-chips').innerHTML=`
-    <div class="info-chip">📁 ${e.project}</div>
-    <div class="info-chip">📅 ${e.date}</div>
-    <div class="info-chip">🕐 ${e.time}</div>
-    <div class="info-chip">🖼 ${e.photos?.length||0} รูป</div>`;
-  document.getElementById('detail-thumbs').innerHTML=(e.photos||[]).map(p=>`<img src="${p.dataURL}" class="report-thumb">`).join('');
+  document.getElementById('detail-chips').innerHTML=`<div class="info-chip">📁 ${e.project}</div><div class="info-chip">📅 ${e.date}</div><div class="info-chip">🕐 ${e.time}</div><div class="info-chip">🖼 ${e.photos?.length||0} รูป</div>`;
+  const photos=e.photos||[];
+  const gridEl=document.getElementById('detail-photo-grid');
+  const labelEl=document.getElementById('detail-photo-label');
+  if(photos.length){
+    labelEl.style.display='block';
+    gridEl.innerHTML=photos.map((p,i)=>`<div class="detail-photo-cell" onclick="openLightbox(${i})"><img src="${p.dataURL}" loading="lazy"><div class="photo-index">${i+1}/${photos.length}</div></div>`).join('');
+  }else{labelEl.style.display='none';gridEl.innerHTML='';}
   document.getElementById('detail-body').textContent=e.detail||'(ไม่มีรายละเอียด)';
   goTo('screen-detail');
 }
 
-function renderLog() {
+function renderLog(){
   const el=document.getElementById('log-list');
   if(!S.logs.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div>ยังไม่มี log</div>';return;}
-  el.innerHTML=S.logs.map(l=>`
-    <div class="log-item">
-      <div class="log-dot ${l.type||''}"></div>
-      <div><div class="log-time">${l.time}</div><div class="log-text">${l.msg}</div></div>
-    </div>`).join('');
+  el.innerHTML=S.logs.map(l=>`<div class="log-item"><div class="log-dot ${l.type||''}"></div><div><div class="log-time">${l.time}</div><div class="log-text">${l.msg}</div></div></div>`).join('');
 }
+function updateStats(){ document.getElementById('s-entries').textContent=S.entries.length; document.getElementById('s-projects').textContent=S.projects.length; document.getElementById('s-photos').textContent=S.entries.reduce((s,e)=>s+(e.photos?.length||0),0); }
 
-function updateStats(){
-  document.getElementById('s-entries').textContent=S.entries.length;
-  document.getElementById('s-projects').textContent=S.projects.length;
-  document.getElementById('s-photos').textContent=S.entries.reduce((s,e)=>s+(e.photos?.length||0),0);
-}
-
-// ══════════════════════════════════════
-//  Word Export — ใช้ docxLib ที่โหลดแล้ว
-// ══════════════════════════════════════
-async function exportWord(projName) {
-  // ถ้า library ยังไม่โหลด ลองโหลดใหม่อีกครั้ง
-  if (!S.docxReady || !window.docx) {
-    showOverlay('กำลังโหลด library...\nกรุณาตรวจสอบ internet');
-    const ok = await loadDocx();
-    if (!ok || !window.docx) {
-      hideOverlay();
-      showToast('❌ โหลด library ไม่สำเร็จ — ตรวจสอบ internet แล้วลองใหม่','error');
-      return;
-    }
-    S.docxReady = true;
-    hideOverlay();
-  }
-
+// ═══════════════════════════════════════════════
+//  Export Word — ใช้ built-in DOCX builder
+// ═══════════════════════════════════════════════
+async function exportWord(projName){
   const entries=S.entries.filter(e=>e.project===projName).slice().reverse();
-  if(!entries.length){ showToast('ไม่มีข้อมูล','error'); return; }
-
-  showOverlay(`กำลังสร้างไฟล์ Word\n${projName}`);
-  await sleep(50);
-
-  try {
-    const {Document,Packer,Paragraph,TextRun,ImageRun,HeadingLevel,AlignmentType,BorderStyle} = window.docx;
-    const ch=[];
-
-    // หน้าปก
-    ch.push(
-      new Paragraph({heading:HeadingLevel.HEADING_1,alignment:AlignmentType.CENTER,
-        children:[new TextRun({text:projName,bold:true,size:44,font:'Angsana New'})]}),
-      new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:400},
-        children:[new TextRun({text:`รายงานภาคสนาม · ${entries.length} รายการ · ${new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'})}`,size:24,font:'Angsana New',color:'666666'})]}),
-      new Paragraph({border:{bottom:{style:BorderStyle.SINGLE,size:6,color:'f0a500',space:1}},spacing:{after:480},children:[new TextRun('')]})
-    );
-
-    // แต่ละ entry
-    for(let ei=0;ei<entries.length;ei++){
-      const e=entries[ei];
-      setOverlayMsg(`รายการ ${ei+1}/${entries.length}\n${e.topic}`);
-      await sleep(20);
-
-      ch.push(
-        new Paragraph({spacing:{before:ei>0?480:0,after:80},
-          children:[new TextRun({text:`${e.date}   เวลา ${e.time}`,size:20,font:'Angsana New',color:'888888'})]}),
-        new Paragraph({heading:HeadingLevel.HEADING_2,spacing:{before:80,after:200},
-          children:[new TextRun({text:e.topic,bold:true,size:34,font:'Angsana New'})]})
-      );
-
-      // รูปภาพ
-      for(let pi=0;pi<(e.photos||[]).length;pi++){
-        const p=e.photos[pi];
-        const {w,h}=await imgDims(p.dataURL);
-        const ratio=Math.min(5000000/w,5000000/h,1);
-        ch.push(
-          new Paragraph({spacing:{before:pi===0?100:240,after:0},
-            children:[new ImageRun({data:toUint8(p.dataURL),transformation:{width:Math.round(w*ratio)/9525,height:Math.round(h*ratio)/9525},type:'jpg'})]}),
-          new Paragraph({spacing:{before:60,after:200},
-            children:[new TextRun({text:`รูปที่ ${pi+1}  ·  ${e.date} ${e.time}`,size:18,italics:true,color:'888888',font:'Angsana New'})]})
-        );
-      }
-
-      // รายละเอียด
-      if(e.detail){
-        ch.push(new Paragraph({spacing:{before:160,after:100},
-          children:[new TextRun({text:'รายละเอียด',bold:true,size:26,font:'Angsana New',color:'333333'})]}));
-        e.detail.split('\n').forEach(line=>
-          ch.push(new Paragraph({spacing:{after:80},children:[new TextRun({text:line||' ',size:26,font:'Angsana New'})]}))
-        );
-      }
-
-      if(ei<entries.length-1)
-        ch.push(new Paragraph({spacing:{before:320,after:0},
-          border:{bottom:{style:BorderStyle.SINGLE,size:1,color:'DDDDDD',space:1}},children:[new TextRun('')]}));
-    }
-
-    setOverlayMsg('กำลัง generate ไฟล์...'); await sleep(30);
-
-    const doc=new Document({
-      styles:{
-        default:{document:{run:{font:'Angsana New',size:26}}},
-        paragraphStyles:[
-          {id:'Heading1',name:'Heading 1',basedOn:'Normal',next:'Normal',quickFormat:true,
-            run:{size:44,bold:true,font:'Angsana New'},paragraph:{spacing:{before:240,after:240},outlineLevel:0}},
-          {id:'Heading2',name:'Heading 2',basedOn:'Normal',next:'Normal',quickFormat:true,
-            run:{size:34,bold:true,font:'Angsana New'},paragraph:{spacing:{before:180,after:180},outlineLevel:1}},
-        ]
-      },
-      sections:[{
-        properties:{page:{size:{width:11906,height:16838},margin:{top:1134,bottom:1134,left:1134,right:1134}}},
-        children:ch
-      }]
-    });
-
-    const buf=await Packer.toBuffer(doc);
-    const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
-    const t=nowObj(), safe=projName.replace(/[^\w\u0E00-\u0E7Fa-zA-Z0-9]/g,'_');
+  if(!entries.length){showToast('ไม่มีข้อมูล','error');return;}
+  showOverlay(`สร้างไฟล์ Word...\n${projName}`);
+  try{
+    setOverlayMsg(`กำลัง build DOCX\n(${entries.length} รายการ)`);
+    await sleep(30);
+    const blob=await buildDocx(projName,entries);
+    const t=nowObj(),safe=projName.replace(/[^\w\u0E00-\u0E7Fa-zA-Z0-9]/g,'_');
     const fname=`${t.fn}_${safe}.docx`;
-    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; a.click();
-    URL.revokeObjectURL(a.href);
-
-    const log={time:new Date().toLocaleString('th-TH'),msg:`ส่งออก Word: ${fname}`,type:'blue'};
-    await dbPut('logs',log); S.logs.unshift(log);
-    hideOverlay(); showToast(`📄 ${fname}`,'success');
-  } catch(err){ hideOverlay(); showToast('❌ '+err.message,'error'); console.error(err); }
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fname;a.click();URL.revokeObjectURL(a.href);
+    const log={time:new Date().toLocaleString('th-TH'),msg:`ส่งออก Word: ${fname}`,type:'blue'};await dbPut('logs',log);S.logs.unshift(log);
+    hideOverlay();showToast(`📄 ${fname}`,'success');
+  }catch(err){hideOverlay();showToast('❌ '+err.message,'error');console.error(err);}
 }
 
-async function exportAllLog() {
+async function exportAllLog(){
   const all=await dbGetAll('logs').catch(()=>S.logs);
-  if(!all.length){ showToast('ยังไม่มี log','error'); return; }
+  if(!all.length){showToast('ยังไม่มี log','error');return;}
   const t=nowObj();
   const blob=new Blob([JSON.stringify({exported:t.iso,entries_count:S.entries.length,logs:all},null,2)],{type:'application/json'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`FieldCollector_log_${t.fn}.json`; a.click();
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`FieldCollector_log_${t.fn}.json`;a.click();
   showToast('⬇ log.json','success');
 }
 
-// ══════════════════════════════════════
-//  Utilities
-// ══════════════════════════════════════
-function imgDims(src){ return new Promise(res=>{ const i=new Image(); i.onload=()=>res({w:i.naturalWidth*9525,h:i.naturalHeight*9525}); i.onerror=()=>res({w:3000000,h:2250000}); i.src=src; }); }
-function toUint8(d){ const b=d.split(',')[1], bin=atob(b), a=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) a[i]=bin.charCodeAt(i); return a; }
-function showOverlay(m){ document.getElementById('overlay-msg').textContent=m; document.getElementById('overlay').classList.add('show'); }
-function setOverlayMsg(m){ document.getElementById('overlay-msg').textContent=m; }
-function hideOverlay(){ document.getElementById('overlay').classList.remove('show'); }
-function showToast(msg,type=''){ const t=document.getElementById('toast'); t.textContent=msg; t.className=type?`show ${type}`:'show'; setTimeout(()=>t.className='',3000); }
-function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+// ═══════════════════════════════════════════════
+//  Lightbox
+// ═══════════════════════════════════════════════
+let LB={photos:[],idx:0,touchX:0,dragging:false,dragDX:0};
+function openLightbox(startIdx){
+  const e=S.entries.find(x=>x.id===S.currentDetailId);if(!e||!e.photos?.length) return;
+  LB.photos=e.photos;LB.idx=startIdx;
+  const vw=Math.min(window.innerWidth,480);
+  const slides=document.getElementById('lb-slides');
+  slides.style.transition='none';
+  slides.innerHTML=LB.photos.map(p=>`<div class="lb-slide" style="width:${vw}px"><img src="${p.dataURL}" draggable="false"></div>`).join('');
+  slides.style.width=(vw*LB.photos.length)+'px';
+  lbUI();document.getElementById('lightbox').classList.add('open');document.body.style.overflow='hidden';
+  const tr=document.getElementById('lb-track');
+  tr.addEventListener('touchstart',lbTS,{passive:true});tr.addEventListener('touchmove',lbTM,{passive:false});tr.addEventListener('touchend',lbTE);
+}
+function closeLightbox(){
+  document.getElementById('lightbox').classList.remove('open');document.body.style.overflow='';
+  const tr=document.getElementById('lb-track');tr.removeEventListener('touchstart',lbTS);tr.removeEventListener('touchmove',lbTM);tr.removeEventListener('touchend',lbTE);
+}
+function lbGo(d){LB.idx=Math.max(0,Math.min(LB.photos.length-1,LB.idx+d));lbUI();}
+function lbUI(){
+  const vw=Math.min(window.innerWidth,480);
+  const s=document.getElementById('lb-slides');s.style.transition='transform .3s cubic-bezier(.4,0,.2,1)';s.style.transform=`translateX(${-LB.idx*vw}px)`;
+  document.getElementById('lb-counter').textContent=`${LB.idx+1} / ${LB.photos.length}`;
+  document.getElementById('lb-prev').style.opacity=LB.idx===0?'0.2':'1';
+  document.getElementById('lb-next').style.opacity=LB.idx===LB.photos.length-1?'0.2':'1';
+  document.getElementById('lb-dots').innerHTML=LB.photos.map((_,i)=>`<div class="lb-dot${i===LB.idx?' active':''}"></div>`).join('');
+}
+function lbTS(e){LB.touchX=e.touches[0].clientX;LB.dragging=true;LB.dragDX=0;}
+function lbTM(e){if(!LB.dragging)return;LB.dragDX=e.touches[0].clientX-LB.touchX;const vw=Math.min(window.innerWidth,480);const s=document.getElementById('lb-slides');s.style.transition='none';s.style.transform=`translateX(${-LB.idx*vw+LB.dragDX}px)`;if(Math.abs(LB.dragDX)>8)e.preventDefault();}
+function lbTE(){LB.dragging=false;if(LB.dragDX<-60&&LB.idx<LB.photos.length-1)LB.idx++;else if(LB.dragDX>60&&LB.idx>0)LB.idx--;lbUI();}
+document.addEventListener('keydown',e=>{if(!document.getElementById('lightbox').classList.contains('open'))return;if(e.key==='ArrowLeft')lbGo(-1);if(e.key==='ArrowRight')lbGo(1);if(e.key==='Escape')closeLightbox();});
+function lbDownload(){const p=LB.photos[LB.idx];if(!p)return;const a=document.createElement('a');a.href=p.dataURL;a.download=`photo_${LB.idx+1}.jpg`;a.click();showToast('⬇ บันทึกรูปแล้ว','success');}
+
+function showOverlay(m){document.getElementById('overlay-msg').textContent=m;document.getElementById('overlay').classList.add('show');}
+function setOverlayMsg(m){document.getElementById('overlay-msg').textContent=m;}
+function hideOverlay(){document.getElementById('overlay').classList.remove('show');}
+function showToast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className=type?`show ${type}`:'show';setTimeout(()=>t.className='',3000);}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 </script>
 </body>
 </html>
