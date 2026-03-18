@@ -121,6 +121,20 @@ html,body{height:100%;overflow:hidden;background:var(--bg)}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #toast.success{border-color:rgba(34,197,94,.4);color:var(--success)}
 #toast.error{border-color:rgba(239,68,68,.4);color:var(--danger)}
+
+/* Edit mode */
+.edit-input{width:100%;background:var(--card);border:1px solid var(--accent);border-radius:10px;color:var(--text);font-family:var(--sans);font-size:15px;padding:10px 13px;outline:none;line-height:1.6;-webkit-appearance:none;appearance:none}
+.edit-input:focus{border-color:var(--accent)}
+textarea.edit-input{resize:none;min-height:120px}
+.edit-badge{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:4px;background:rgba(240,165,0,.12);color:var(--accent);border:1px solid rgba(240,165,0,.25);margin-top:4px}
+.edit-history{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-top:8px}
+.edit-history-item{font-family:var(--mono);font-size:10px;color:var(--muted);padding:4px 0;border-bottom:1px solid rgba(42,48,69,.5)}
+.edit-history-item:last-child{border-bottom:none}
+.btn-edit{background:rgba(240,165,0,.1);color:var(--accent);border:1px solid rgba(240,165,0,.3);margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-edit:active{background:rgba(240,165,0,.18)}
+.btn-save-edit{background:var(--accent);color:#000;margin-top:8px}
+.btn-cancel-edit{background:transparent;color:var(--text);border:1px solid var(--border);margin-top:8px}
+
 .section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .section-label{font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
 .link-btn{font-size:12px;background:none;border:none;color:var(--accent2);cursor:pointer;font-family:var(--sans)}
@@ -222,12 +236,33 @@ html,body{height:100%;overflow:hidden;background:var(--bg)}
   </div>
   <div class="content">
     <div class="info-row" id="detail-chips"></div>
-    <div class="section-title-sm" id="detail-photo-label" style="display:none">รูปภาพ — แตะเพื่อดูเต็มจอ</div>
-    <div class="detail-photo-grid" id="detail-photo-grid"></div>
-    <div class="section-title-sm">รายละเอียด</div>
-    <div id="detail-body" style="font-size:15px;line-height:1.75;color:var(--text);white-space:pre-wrap;margin-bottom:20px"></div>
-    <div class="divider"></div>
-    <button class="btn btn-danger" onclick="deleteCurrentEntry()">🗑 ลบรายการนี้</button>
+
+    <!-- VIEW MODE -->
+    <div id="detail-view-mode">
+      <div class="section-title-sm" id="detail-photo-label" style="display:none">รูปภาพ — แตะเพื่อดูเต็มจอ</div>
+      <div class="detail-photo-grid" id="detail-photo-grid"></div>
+      <div class="section-title-sm">หัวข้อ</div>
+      <div id="detail-topic-view" style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:14px"></div>
+      <div class="section-title-sm">รายละเอียด</div>
+      <div id="detail-body" style="font-size:15px;line-height:1.75;color:var(--text);white-space:pre-wrap;margin-bottom:12px"></div>
+      <div id="detail-edit-history" style="display:none"></div>
+      <div class="divider"></div>
+      <button class="btn btn-edit" onclick="startEdit()">✏️ แก้ไขหัวข้อ / รายละเอียด</button>
+      <button class="btn btn-danger" onclick="deleteCurrentEntry()" style="margin-top:8px">🗑 ลบรายการนี้</button>
+    </div>
+
+    <!-- EDIT MODE -->
+    <div id="detail-edit-mode" style="display:none">
+      <div class="section-title-sm">แก้ไขหัวข้อ</div>
+      <input class="edit-input" id="edit-topic" style="margin-bottom:14px">
+      <div class="section-title-sm">แก้ไขรายละเอียด</div>
+      <textarea class="edit-input" id="edit-detail"></textarea>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:6px">
+        ระบบจะบันทึกเวลาแก้ไขไว้อัตโนมัติ
+      </div>
+      <button class="btn btn-save-edit" onclick="saveEdit()">💾 บันทึกการแก้ไข</button>
+      <button class="btn btn-cancel-edit" onclick="cancelEdit()">ยกเลิก</button>
+    </div>
   </div>
 </div>
 
@@ -640,6 +675,9 @@ function renderProjects(){
 function showDetail(id){
   const e=S.entries.find(x=>x.id===id);if(!e)return;
   S.currentDetailId=id;
+  // switch back to view mode
+  document.getElementById('detail-view-mode').style.display='block';
+  document.getElementById('detail-edit-mode').style.display='none';
   document.getElementById('detail-title').textContent=e.topic;
   document.getElementById('detail-sub').textContent=`${e.date} · ${e.time}`;
   document.getElementById('detail-chips').innerHTML=`<div class="info-chip">📁 ${e.project}</div><div class="info-chip">📅 ${e.date}</div><div class="info-chip">🕐 ${e.time}</div><div class="info-chip">🖼 ${e.photos?.length||0} รูป</div>`;
@@ -650,8 +688,64 @@ function showDetail(id){
     labelEl.style.display='block';
     gridEl.innerHTML=photos.map((p,i)=>`<div class="detail-photo-cell" onclick="openLightbox(${i})"><img src="${p.dataURL}" loading="lazy"><div class="photo-index">${i+1}/${photos.length}</div></div>`).join('');
   }else{labelEl.style.display='none';gridEl.innerHTML='';}
+  document.getElementById('detail-topic-view').textContent=e.topic;
   document.getElementById('detail-body').textContent=e.detail||'(ไม่มีรายละเอียด)';
+  // Edit history
+  const histEl=document.getElementById('detail-edit-history');
+  if(e.editHistory&&e.editHistory.length){
+    histEl.style.display='block';
+    histEl.innerHTML=`<div class="edit-history"><div style="font-family:var(--mono);font-size:10px;color:var(--accent);margin-bottom:6px">ประวัติการแก้ไข</div>`+
+      e.editHistory.slice().reverse().map(h=>`<div class="edit-history-item">✏ ${h.ts} — ${h.field==='both'?'หัวข้อ + รายละเอียด':h.field==='topic'?'หัวข้อ':'รายละเอียด'}</div>`).join('')+
+      `</div>`;
+  }else{histEl.style.display='none';}
   goTo('screen-detail');
+}
+
+function startEdit(){
+  const e=S.entries.find(x=>x.id===S.currentDetailId);if(!e)return;
+  document.getElementById('edit-topic').value=e.topic;
+  document.getElementById('edit-detail').value=e.detail||'';
+  document.getElementById('detail-view-mode').style.display='none';
+  document.getElementById('detail-edit-mode').style.display='block';
+  setTimeout(()=>document.getElementById('edit-topic').focus(),100);
+}
+
+function cancelEdit(){
+  document.getElementById('detail-view-mode').style.display='block';
+  document.getElementById('detail-edit-mode').style.display='none';
+}
+
+async function saveEdit(){
+  const id=S.currentDetailId;
+  const e=S.entries.find(x=>x.id===id);if(!e)return;
+  const newTopic=document.getElementById('edit-topic').value.trim();
+  const newDetail=document.getElementById('edit-detail').value.trim();
+  if(!newTopic){showToast('⚠ หัวข้อห้ามว่าง','error');return;}
+  const topicChanged=newTopic!==e.topic;
+  const detailChanged=newDetail!==(e.detail||'');
+  if(!topicChanged&&!detailChanged){cancelEdit();showToast('ไม่มีการเปลี่ยนแปลง','');return;}
+  const ts=nowObj();
+  const histEntry={
+    ts:ts.display,
+    field:topicChanged&&detailChanged?'both':topicChanged?'topic':'detail',
+    oldTopic:e.topic,
+    oldDetail:e.detail||''
+  };
+  e.topic=newTopic;
+  e.detail=newDetail;
+  e.editHistory=e.editHistory||[];
+  e.editHistory.push(histEntry);
+  e.lastEdited=ts.display;
+  showOverlay('กำลังบันทึก...');
+  try{
+    await dbPut('entries',e);
+    const log={time:ts.display,msg:`แก้ไข: ${e.project} — ${newTopic}`,type:'blue'};
+    await dbPut('logs',log);S.logs.unshift(log);
+    hideOverlay();showToast('✓ บันทึกการแก้ไขแล้ว','success');
+    // กลับไปแสดง view mode พร้อมข้อมูลใหม่
+    showDetail(id);
+    renderProjects();
+  }catch(err){hideOverlay();showToast('❌ '+err.message,'error');}
 }
 
 function renderLog(){
