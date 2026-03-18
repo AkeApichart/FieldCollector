@@ -195,6 +195,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg)}
       <div class="photo-grid" id="photo-grid"></div>
       <div class="photo-count-label" id="photo-count-label">0 / 5 รูป</div>
       <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(this)">
+      <input type="file" id="gallery-input" accept="image/*" multiple style="display:none" onchange="handleGallery(this)">
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button type="button" onclick="document.getElementById('gallery-input').click()" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);font-family:var(--sans);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
+          🖼 เลือกจากคลัง
+        </button>
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label">รายละเอียด</label>
@@ -522,6 +528,29 @@ function getProjName(){ const sel=document.getElementById('proj-select'); return
 function renderSlots(){ const g=document.getElementById('photo-grid'); g.innerHTML=''; for(let i=0;i<MAX;i++){ const s=document.createElement('div'); s.className='photo-slot'+(S.photos[i]?' filled':''); if(S.photos[i]){ s.innerHTML=`<img src="${S.photos[i].dataURL}"><span class="slot-num">${i+1}</span><button class="slot-del" onclick="rmPhoto(event,${i})">✕</button>`; }else{ s.innerHTML='<span class="slot-add">📷</span>'; s.onclick=()=>openSlot(i); } g.appendChild(s); } document.getElementById('photo-count-label').textContent=`${S.photos.filter(Boolean).length} / ${MAX} รูป`; }
 function openSlot(i){ if(S.photos.filter(Boolean).length>=MAX){showToast('ครบ 5 รูปแล้ว','error');return;} S.currentSlot=i; document.getElementById('photo-input').click(); }
 function handlePhoto(input){ const file=input.files[0]; if(!file||!file.type.startsWith('image/')) return; const r=new FileReader(); r.onload=e=>compress(e.target.result,1200,.82).then(url=>{ const idx=S.currentSlot>=0?S.currentSlot:S.photos.filter(Boolean).length; if(idx>=MAX) return; S.photos[idx]={dataURL:url,filename:file.name}; renderSlots(); input.value=''; S.currentSlot=-1; }); r.readAsDataURL(file); }
+function handleGallery(input){
+  const files=Array.from(input.files);
+  if(!files.length) return;
+  const available=MAX-S.photos.filter(Boolean).length;
+  if(available<=0){showToast('ครบ 5 รูปแล้ว','error');input.value='';return;}
+  const toLoad=files.slice(0,available);
+  if(files.length>available) showToast(`เลือกได้อีก ${available} รูป (ตัดเหลือ ${available})`, 'error');
+  let done=0;
+  toLoad.forEach(file=>{
+    if(!file.type.startsWith('image/')) return;
+    const r=new FileReader();
+    r.onload=e=>compress(e.target.result,1200,.82).then(url=>{
+      const idx=S.photos.filter(Boolean).length;
+      if(idx>=MAX) return;
+      S.photos[idx]={dataURL:url,filename:file.name};
+      done++;
+      if(done===toLoad.length){renderSlots();showToast(`✓ เพิ่ม ${done} รูปจากคลัง`,'success');}
+      else renderSlots();
+    });
+    r.readAsDataURL(file);
+  });
+  input.value='';
+}
 function compress(src,maxPx,q){ return new Promise(res=>{ const img=new Image(); img.onload=()=>{ let w=img.width,h=img.height; if(w>maxPx||h>maxPx){const r=Math.min(maxPx/w,maxPx/h);w=Math.round(w*r);h=Math.round(h*r);} const c=document.createElement('canvas'); c.width=w;c.height=h; c.getContext('2d').drawImage(img,0,0,w,h); res(c.toDataURL('image/jpeg',q)); }; img.src=src; }); }
 function rmPhoto(e,i){ e.stopPropagation(); S.photos[i]=null; S.photos=S.photos.filter(Boolean); renderSlots(); }
 
@@ -553,6 +582,34 @@ async function deleteCurrentEntry(){
   }catch(err){showToast('❌ '+err.message,'error');}
 }
 
+async function deleteProject(projName){
+  const entries=S.entries.filter(e=>e.project===projName);
+  const photoCount=entries.reduce((s,e)=>s+(e.photos?.length||0),0);
+  const confirmed=confirm(`ลบโครงการ "${projName}" ทั้งหมดใช่ไหม?\n\n` +
+    `• ${entries.length} รายการ\n` +
+    `• ${photoCount} รูปภาพ\n\n` +
+    `⚠ ข้อมูลจะหายถาวร กู้คืนไม่ได้`);
+  if(!confirmed) return;
+  // ยืนยันรอบที่ 2
+  const reconfirmed=confirm(`ยืนยันอีกครั้ง\nลบ "${projName}" และข้อมูลทั้งหมด ${entries.length} รายการ?`);
+  if(!reconfirmed) return;
+  showOverlay(`กำลังลบโครงการ\n${projName}...`);
+  try{
+    for(const e of entries) await dbDelete('entries',e.id);
+    await dbDelete('projects',projName);
+    await dbDelete('exports',projName).catch(()=>{});
+    S.entries=S.entries.filter(e=>e.project!==projName);
+    S.projects=S.projects.filter(p=>p!==projName);
+    delete S.exports[projName];
+    const sel=document.getElementById('proj-select');
+    for(let i=sel.options.length-1;i>=2;i--) if(sel.options[i].value===projName) sel.remove(i);
+    const log={time:new Date().toLocaleString('th-TH'),msg:`ลบโครงการ: ${projName} (${entries.length} รายการ)`,type:'red'};
+    await dbPut('logs',log);S.logs.unshift(log);
+    updateStats();renderProjects();
+    document.getElementById('db-status-label').textContent=`บันทึกแล้ว ${S.entries.length} รายการ`;
+    hideOverlay();showToast(`🗑 ลบโครงการ "${projName}" แล้ว`,'success');
+  }catch(err){hideOverlay();showToast('❌ '+err.message,'error');}
+}
 function renderProjects(){
   const el=document.getElementById('projects-list');
   if(!S.entries.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📷</div>ยังไม่มีข้อมูล<br>กด + เพื่อเริ่มบันทึก</div>';return;}
@@ -561,7 +618,10 @@ function renderProjects(){
     <div class="proj-group">
       <div class="proj-group-header">
         <div><div class="proj-group-name">📁 ${proj}</div><div class="proj-group-meta">${entries.length} รายการ · ${entries.reduce((s,e)=>s+(e.photos?.length||0),0)} รูป</div></div>
-        <div class="badge blue">${entries.length}</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="badge blue">${entries.length}</div>
+          <button onclick="deleteProject('${proj}')" style="width:28px;height:28px;border-radius:8px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.07);color:var(--danger);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center" title="ลบโครงการ">🗑</button>
+        </div>
       </div>
       ${entries.map(e=>`
         <div class="entry-row" onclick="showDetail('${e.id}')">
