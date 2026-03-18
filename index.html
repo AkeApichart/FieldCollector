@@ -477,16 +477,16 @@ async function buildDocx(projName, entries){
 // ═══════════════════════════════════════════════
 //  IndexedDB
 // ═══════════════════════════════════════════════
-const DB_NAME='FieldCollectorDB',DB_VER=1;
+const DB_NAME='FieldCollectorDB',DB_VER=2;
 let db=null;
-function openDB(){ return new Promise((res,rej)=>{ const req=indexedDB.open(DB_NAME,DB_VER); req.onupgradeneeded=e=>{ const d=e.target.result; if(!d.objectStoreNames.contains('entries')){const s=d.createObjectStore('entries',{keyPath:'id'});s.createIndex('project','project',{unique:false});} if(!d.objectStoreNames.contains('logs')) d.createObjectStore('logs',{keyPath:'id',autoIncrement:true}); if(!d.objectStoreNames.contains('projects')) d.createObjectStore('projects',{keyPath:'name'}); }; req.onsuccess=e=>res(e.target.result); req.onerror=e=>rej(e.target.error); }); }
+function openDB(){ return new Promise((res,rej)=>{ const req=indexedDB.open(DB_NAME,DB_VER); req.onupgradeneeded=e=>{ const d=e.target.result; if(!d.objectStoreNames.contains('entries')){const s=d.createObjectStore('entries',{keyPath:'id'});s.createIndex('project','project',{unique:false});} if(!d.objectStoreNames.contains('logs')) d.createObjectStore('logs',{keyPath:'id',autoIncrement:true}); if(!d.objectStoreNames.contains('projects')) d.createObjectStore('projects',{keyPath:'name'}); if(!d.objectStoreNames.contains('exports')) d.createObjectStore('exports',{keyPath:'project'}); }; req.onsuccess=e=>res(e.target.result); req.onerror=e=>rej(e.target.error); }); }
 const idbTx=(store,mode='readonly')=>db.transaction(store,mode).objectStore(store);
 const dbGetAll=store=>new Promise((res,rej)=>{const r=idbTx(store).getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
 const dbPut=(store,obj)=>new Promise((res,rej)=>{const r=idbTx(store,'readwrite').put(obj);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
 const dbDelete=(store,key)=>new Promise((res,rej)=>{const r=idbTx(store,'readwrite').delete(key);r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});
 
 const MAX=5;
-const S={entries:[],projects:[],logs:[],photos:[],currentSlot:-1,currentDetailId:null};
+const S={entries:[],projects:[],logs:[],exports:{},photos:[],currentSlot:-1,currentDetailId:null};
 
 window.addEventListener('load',async()=>{
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
@@ -506,6 +506,7 @@ async function loadAll(){
   const entries=await dbGetAll('entries'); S.entries=entries.sort((a,b)=>b.timestamp_iso.localeCompare(a.timestamp_iso));
   const projs=await dbGetAll('projects'); S.projects=projs.map(p=>p.name);
   const logs=await dbGetAll('logs'); S.logs=logs.sort((a,b)=>(b.id||0)-(a.id||0)).slice(0,300);
+  const exps=await dbGetAll('exports'); exps.forEach(x=>{S.exports[x.project]=x;});
   const sel=document.getElementById('proj-select');
   while(sel.options.length>2) sel.remove(2);
   S.projects.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;sel.appendChild(o);});
@@ -567,7 +568,12 @@ function renderProjects(){
           ${e.photos?.length?`<img src="${e.photos[0].dataURL}" class="entry-thumb">`:'<div class="entry-thumb-ph">📷</div>'}
           <div style="flex:1;min-width:0"><div class="entry-title">${e.topic}</div><div class="entry-meta">${e.date} ${e.time} · ${e.photos?.length||0} รูป</div></div>
         </div>`).join('')}
-      <button class="btn btn-word" onclick="exportWord('${proj}')">📄 ส่งออก Word — ${proj}</button>
+      <div style="margin-top:10px">
+        <div id="exp-badge-${proj.replace(/[^a-zA-Z0-9฀-๿]/g,'_')}" style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:6px;min-height:14px">
+          ${S.exports[proj]?'☑ Export ล่าสุด: '+S.exports[proj].display:'ยังไม่เคย Export'}
+        </div>
+        <button class="btn btn-word" onclick="exportWord('${proj}')">📄 ส่งออก Word — ${proj}</button>
+      </div>
     </div>`).join('');
 }
 
@@ -610,6 +616,8 @@ async function exportWord(projName){
     const fname=`${t.fn}_${safe}.docx`;
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fname;a.click();URL.revokeObjectURL(a.href);
     const log={time:new Date().toLocaleString('th-TH'),msg:`ส่งออก Word: ${fname}`,type:'blue'};await dbPut('logs',log);S.logs.unshift(log);
+    const expRec={project:projName,date:t.fn,display:new Date().toLocaleString('th-TH'),fname};
+    await dbPut('exports',expRec);S.exports[projName]=expRec;
     hideOverlay();showToast(`📄 ${fname}`,'success');
   }catch(err){hideOverlay();showToast('❌ '+err.message,'error');console.error(err);}
 }
