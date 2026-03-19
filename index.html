@@ -151,6 +151,16 @@ textarea.edit-input{resize:none;min-height:120px}
   transition:background .15s}
 .ref-tag:hover{background:rgba(59,130,246,.22)}
 
+
+/* Edit photo grid */
+.edit-photo-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:6px}
+.edit-photo-slot{aspect-ratio:1;border-radius:10px;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;background:var(--card)}
+.edit-photo-slot.filled{border-style:solid;border-color:rgba(255,255,255,.1)}
+.edit-photo-slot img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:8px}
+.edit-photo-slot .ep-num{position:absolute;bottom:2px;right:3px;font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.85);background:rgba(0,0,0,.6);border-radius:3px;padding:0 3px;z-index:2}
+.edit-photo-slot .ep-del{position:absolute;top:2px;right:2px;width:18px;height:18px;background:rgba(239,68,68,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;z-index:3;color:#fff;border:none}
+.edit-photo-slot .ep-add{font-size:18px;opacity:.25}
+
 .section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .section-label{font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
 .link-btn{font-size:12px;background:none;border:none;color:var(--accent2);cursor:pointer;font-family:var(--sans)}
@@ -274,8 +284,24 @@ textarea.edit-input{resize:none;min-height:120px}
       <div class="section-title-sm">แก้ไขหัวข้อ</div>
       <input class="edit-input" id="edit-topic" style="margin-bottom:14px">
       <div class="section-title-sm">แก้ไขรายละเอียด</div>
-      <textarea class="edit-input" id="edit-detail"></textarea>
-      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:6px">
+      <textarea class="edit-input" id="edit-detail" style="margin-bottom:14px"></textarea>
+
+      <div class="section-title-sm">รูปภาพ</div>
+      <div class="edit-photo-grid" id="edit-photo-grid"></div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:4px;margin-bottom:6px" id="edit-photo-count">0 / 10 รูป</div>
+      <input type="file" id="edit-photo-input" accept="image/*" capture="environment" style="display:none" onchange="handleEditPhoto(this)">
+      <input type="file" id="edit-gallery-input" accept="image/*" multiple style="display:none" onchange="handleEditGallery(this)">
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button type="button" onclick="document.getElementById('edit-gallery-input').click()" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);font-family:var(--sans);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
+          🖼 เลือกจากคลัง
+        </button>
+      </div>
+
+      <!-- ref chips for edit detail -->
+      <div class="ref-chips" id="edit-ref-chips"></div>
+      <div class="ref-hint" id="edit-ref-hint" style="display:none;margin-bottom:8px">แตะเพื่อแทรกหมายเลขรูปในรายละเอียด</div>
+
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:4px">
         ระบบจะบันทึกเวลาแก้ไขไว้อัตโนมัติ
       </div>
       <button class="btn btn-save-edit" onclick="saveEdit()">💾 บันทึกการแก้ไข</button>
@@ -559,7 +585,7 @@ async function buildDocx(projName, entries){
       for(const h of e.editHistory){
         body+=`<w:p><w:pPr><w:spacing w:after="60"/><w:ind w:left="120"/></w:pPr>
           <w:r><w:rPr><w:i/><w:sz w:val="20"/><w:szCs w:val="20"/><w:color w:val="888888"/></w:rPr>
-          <w:t>✏  ${xe(h.ts)}  —  ${h.field==='both'?'หัวข้อ + รายละเอียด':h.field==='topic'?'หัวข้อ':'รายละเอียด'}</w:t></w:r>
+          <w:t>✏  ${xe(h.ts)}  —  ${h.field}</w:t></w:r>
         </w:p>`;
       }
     }
@@ -636,7 +662,7 @@ const dbPut=(store,obj)=>new Promise((res,rej)=>{const r=idbTx(store,'readwrite'
 const dbDelete=(store,key)=>new Promise((res,rej)=>{const r=idbTx(store,'readwrite').delete(key);r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});
 
 const MAX=10;
-const S={entries:[],projects:[],logs:[],exports:{},photos:[],currentSlot:-1,currentDetailId:null};
+const S={entries:[],projects:[],logs:[],exports:{},photos:[],currentSlot:-1,currentDetailId:null,editPhotos:[],editCurrentSlot:-1};
 
 window.addEventListener('load',async()=>{
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
@@ -848,7 +874,7 @@ function showDetail(id){
   if(e.editHistory&&e.editHistory.length){
     histEl.style.display='block';
     histEl.innerHTML=`<div class="edit-history"><div style="font-family:var(--mono);font-size:10px;color:var(--accent);margin-bottom:6px">ประวัติการแก้ไข</div>`+
-      e.editHistory.slice().reverse().map(h=>`<div class="edit-history-item">✏ ${h.ts} — ${h.field==='both'?'หัวข้อ + รายละเอียด':h.field==='topic'?'หัวข้อ':'รายละเอียด'}</div>`).join('')+
+      e.editHistory.slice().reverse().map(h=>`<div class="edit-history-item">✏ ${h.ts} — ${h.field}</div>`).join('')+
       `</div>`;
   }else{histEl.style.display='none';}
   goTo('screen-detail');
@@ -887,12 +913,111 @@ function startEdit(){
   const e=S.entries.find(x=>x.id===S.currentDetailId);if(!e)return;
   document.getElementById('edit-topic').value=e.topic;
   document.getElementById('edit-detail').value=e.detail||'';
+  // copy photos to edit buffer
+  S.editPhotos=[...(e.photos||[])];
+  renderEditSlots();
   document.getElementById('detail-view-mode').style.display='none';
   document.getElementById('detail-edit-mode').style.display='block';
   setTimeout(()=>document.getElementById('edit-topic').focus(),100);
 }
 
+function renderEditSlots(){
+  const g=document.getElementById('edit-photo-grid'); if(!g) return;
+  g.innerHTML='';
+  for(let i=0;i<MAX;i++){
+    const s=document.createElement('div');
+    s.className='edit-photo-slot'+(S.editPhotos[i]?' filled':'');
+    if(S.editPhotos[i]){
+      s.innerHTML=`<img src="${S.editPhotos[i].dataURL}"><span class="ep-num">${i+1}</span><button class="ep-del" onclick="rmEditPhoto(event,${i})">✕</button>`;
+    }else{
+      s.innerHTML='<span class="ep-add">📷</span>';
+      s.onclick=()=>openEditSlot(i);
+    }
+    g.appendChild(s);
+  }
+  const filled=S.editPhotos.filter(Boolean).length;
+  const pc=document.getElementById('edit-photo-count');
+  if(pc) pc.textContent=`${filled} / ${MAX} รูป`;
+  // ref chips for edit textarea
+  const rc=document.getElementById('edit-ref-chips');
+  const rh=document.getElementById('edit-ref-hint');
+  if(rc){
+    if(filled>0){
+      if(rh) rh.style.display='block';
+      rc.innerHTML=Array.from({length:filled},(_,i)=>
+        `<button class="ref-chip" onclick="insertEditRef(${i+1})">[รูป${i+1}]</button>`
+      ).join('');
+    }else{
+      if(rh) rh.style.display='none';
+      rc.innerHTML='';
+    }
+  }
+}
+
+function openEditSlot(i){
+  if(S.editPhotos.filter(Boolean).length>=MAX){showToast('ครบ '+MAX+' รูปแล้ว','error');return;}
+  S.editCurrentSlot=i;
+  document.getElementById('edit-photo-input').click();
+}
+
+function handleEditPhoto(input){
+  const file=input.files[0]; if(!file||!file.type.startsWith('image/')) return;
+  const r=new FileReader();
+  r.onload=e=>compress(e.target.result,1200,.82).then(url=>{
+    const idx=S.editCurrentSlot>=0?S.editCurrentSlot:S.editPhotos.filter(Boolean).length;
+    if(idx>=MAX) return;
+    S.editPhotos[idx]={dataURL:url,filename:file.name};
+    renderEditSlots(); input.value=''; S.editCurrentSlot=-1;
+  });
+  r.readAsDataURL(file);
+}
+
+function handleEditGallery(input){
+  const files=Array.from(input.files); if(!files.length) return;
+  const available=MAX-S.editPhotos.filter(Boolean).length;
+  if(available<=0){showToast('ครบ '+MAX+' รูปแล้ว','error');input.value='';return;}
+  const toLoad=files.slice(0,available);
+  if(files.length>available) showToast(`เลือกได้อีก ${available} รูป`,'error');
+  let done=0;
+  toLoad.forEach(file=>{
+    if(!file.type.startsWith('image/')) return;
+    const r=new FileReader();
+    r.onload=e=>compress(e.target.result,1200,.82).then(url=>{
+      const idx=S.editPhotos.filter(Boolean).length;
+      if(idx>=MAX) return;
+      S.editPhotos[idx]={dataURL:url,filename:file.name};
+      done++;
+      if(done===toLoad.length){renderEditSlots();showToast(`✓ เพิ่ม ${done} รูป`,'success');}
+      else renderEditSlots();
+    });
+    r.readAsDataURL(file);
+  });
+  input.value='';
+}
+
+function rmEditPhoto(e,i){
+  e.stopPropagation();
+  S.editPhotos[i]=null;
+  S.editPhotos=S.editPhotos.filter(Boolean);
+  renderEditSlots();
+}
+
+function insertEditRef(n){
+  const ta=document.getElementById('edit-detail'); if(!ta) return;
+  ta.focus();
+  const tag=`[รูป${n}]`;
+  const start=ta.selectionStart, end=ta.selectionEnd;
+  const before=ta.value.slice(0,start), after=ta.value.slice(end);
+  const sep=before&&!before.endsWith(' ')&&!before.endsWith('\n')?' ':'';
+  ta.value=before+sep+tag+' '+after;
+  const pos=start+sep.length+tag.length+1;
+  ta.selectionStart=ta.selectionEnd=pos;
+  showToast(`✓ แทรก ${tag}`,'success');
+}
+
 function cancelEdit(){
+  S.editPhotos=[];
+  S.editCurrentSlot=-1;
   document.getElementById('detail-view-mode').style.display='block';
   document.getElementById('detail-edit-mode').style.display='none';
 }
@@ -905,16 +1030,27 @@ async function saveEdit(){
   if(!newTopic){showToast('⚠ หัวข้อห้ามว่าง','error');return;}
   const topicChanged=newTopic!==e.topic;
   const detailChanged=newDetail!==(e.detail||'');
-  if(!topicChanged&&!detailChanged){cancelEdit();showToast('ไม่มีการเปลี่ยนแปลง','');return;}
+  const oldPhotoCount=(e.photos||[]).length;
+  const newPhotoCount=S.editPhotos.filter(Boolean).length;
+  // compare photo changes by count + first dataURL of each
+  const photosChanged=JSON.stringify((e.photos||[]).map(p=>p.dataURL.slice(0,40)))
+    !==JSON.stringify(S.editPhotos.filter(Boolean).map(p=>p.dataURL.slice(0,40)));
+  if(!topicChanged&&!detailChanged&&!photosChanged){cancelEdit();showToast('ไม่มีการเปลี่ยนแปลง','');return;}
   const ts=nowObj();
+  const changedFields=[];
+  if(topicChanged) changedFields.push('หัวข้อ');
+  if(detailChanged) changedFields.push('รายละเอียด');
+  if(photosChanged) changedFields.push(`รูปภาพ (${oldPhotoCount}→${newPhotoCount} รูป)`);
   const histEntry={
     ts:ts.display,
-    field:topicChanged&&detailChanged?'both':topicChanged?'topic':'detail',
+    field:changedFields.join(' + '),
     oldTopic:e.topic,
-    oldDetail:e.detail||''
+    oldDetail:e.detail||'',
+    oldPhotoCount
   };
   e.topic=newTopic;
   e.detail=newDetail;
+  if(photosChanged) e.photos=S.editPhotos.filter(Boolean);
   e.editHistory=e.editHistory||[];
   e.editHistory.push(histEntry);
   e.lastEdited=ts.display;
