@@ -135,6 +135,22 @@ textarea.edit-input{resize:none;min-height:120px}
 .btn-save-edit{background:var(--accent);color:#000;margin-top:8px}
 .btn-cancel-edit{background:transparent;color:var(--text);border:1px solid var(--border);margin-top:8px}
 
+
+/* Photo reference chips */
+.ref-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;margin-bottom:4px}
+.ref-chip{font-family:var(--mono);font-size:11px;padding:4px 10px;border-radius:6px;
+  border:1px solid rgba(59,130,246,.35);background:rgba(59,130,246,.08);color:var(--accent2);
+  cursor:pointer;transition:all .15s;user-select:none;-webkit-user-select:none}
+.ref-chip:active{background:rgba(59,130,246,.2)}
+.ref-chip.empty{border-color:var(--border);background:none;color:var(--muted);pointer-events:none;opacity:.4}
+.ref-hint{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:4px}
+/* Inline ref tag in detail view */
+.ref-tag{display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:11px;
+  padding:1px 7px;border-radius:4px;background:rgba(59,130,246,.12);color:var(--accent2);
+  border:1px solid rgba(59,130,246,.25);cursor:pointer;vertical-align:middle;margin:0 2px;
+  transition:background .15s}
+.ref-tag:hover{background:rgba(59,130,246,.22)}
+
 .section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .section-label{font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
 .link-btn{font-size:12px;background:none;border:none;color:var(--accent2);cursor:pointer;font-family:var(--sans)}
@@ -205,9 +221,11 @@ textarea.edit-input{resize:none;min-height:120px}
       <input class="form-input" id="topic-input" placeholder="เช่น ตรวจสอบโครงสร้างชั้น 3" autocomplete="off">
     </div>
     <div class="form-group">
-      <label class="form-label">รูปภาพ (สูงสุด 5 รูป)</label>
+      <label class="form-label">รูปภาพ (สูงสุด 10 รูป)</label>
       <div class="photo-grid" id="photo-grid"></div>
-      <div class="photo-count-label" id="photo-count-label">0 / 5 รูป</div>
+      <div class="photo-count-label" id="photo-count-label">0 / 10 รูป</div>
+      <div class="ref-chips" id="ref-chips"></div>
+      <div class="ref-hint" id="ref-hint" style="display:none">แตะปุ่มเพื่อแทรกหมายเลขรูปในช่องรายละเอียด</div>
       <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(this)">
       <input type="file" id="gallery-input" accept="image/*" multiple style="display:none" onchange="handleGallery(this)">
       <div style="display:flex;gap:8px;margin-top:8px">
@@ -392,74 +410,165 @@ function dataURLtoBytes(dataURL){
 async function buildDocx(projName, entries){
   const zip=new ZipWriter();
 
-  // Pre-collect all images with rIds
-  let imgs=[];
-  let rId=2;
+  // Pre-collect images
+  let imgs=[], rId=2;
   for(let ei=0;ei<entries.length;ei++){
     for(let pi=0;pi<(entries[ei].photos||[]).length;pi++){
       const p=entries[ei].photos[pi];
       const dims=await getImgDims(p.dataURL);
       const bytes=dataURLtoBytes(p.dataURL);
-      // Scale to max width 5.4 inch (4953600 EMU), maintain aspect
       const maxEMU=4953600;
       const scale=Math.min(maxEMU/(dims.w*9525), maxEMU/(dims.h*9525), 1);
-      imgs.push({
-        rId:'rId'+rId++, name:`image${imgs.length+1}.jpg`,
-        bytes, ei, pi,
-        cx:Math.round(dims.w*9525*scale),
-        cy:Math.round(dims.h*9525*scale)
-      });
+      imgs.push({ rId:'rId'+rId++, name:`image${imgs.length+1}.jpg`, bytes, ei, pi,
+        cx:Math.round(dims.w*9525*scale), cy:Math.round(dims.h*9525*scale) });
     }
   }
 
-  // document.xml
+  // ── helpers ──────────────────────────────────────────────────────
+  // shaded table row used for info bar (date/time)
+  function infoBar(label, value, shadeHex){
+    const sh=shadeHex||'EBF3FB';
+    return `<w:tr>
+      <w:tc><w:tcPr><w:tcW w:w="1800" w:type="dxa"/><w:shd w:val="clear" w:fill="${sh}"/><w:tcMar><w:top w:w="80"/><w:bottom w:w="80"/><w:left w:w="120"/><w:right w:w="80"/></w:tcMar></w:tcPr>
+        <w:p><w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/><w:color w:val="185FA5"/></w:rPr><w:t>${label}</w:t></w:r></w:p></w:tc>
+      <w:tc><w:tcPr><w:tcW w:w="7206" w:type="dxa"/><w:shd w:val="clear" w:fill="${sh}"/><w:tcMar><w:top w:w="80"/><w:bottom w:w="80"/><w:left w:w="80"/><w:right w:w="120"/></w:tcMar></w:tcPr>
+        <w:p><w:r><w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/><w:color w:val="333333"/></w:rPr><w:t>${value}</w:t></w:r></w:p></w:tc>
+    </w:tr>`;
+  }
+
+  // entry header block: amber left-border + number badge
+  function entryHeader(num, topic){
+    return `<w:p><w:pPr><w:spacing w:before="480" w:after="0"/>
+      <w:pBdr><w:left w:val="single" w:sz="24" w:space="6" w:color="F0A500"/></w:pBdr>
+      <w:ind w:left="180"/></w:pPr>
+      <w:r><w:rPr><w:color w:val="C07800"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t xml:space="preserve">รายการที่ ${num}   </w:t></w:r>
+      <w:r><w:rPr><w:b/><w:sz w:val="34"/><w:szCs w:val="34"/><w:color w:val="111111"/></w:rPr><w:t>${xe(topic)}</w:t></w:r>
+    </w:p>`;
+  }
+
+  // section label (small amber caps)
+  function sectionLabel(text){
+    return `<w:p><w:pPr><w:spacing w:before="200" w:after="60"/></w:pPr>
+      <w:r><w:rPr><w:b/><w:caps/><w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="C07800"/></w:rPr><w:t>${text}</w:t></w:r>
+    </w:p>`;
+  }
+
+  // photo with rounded-corner style caption
+  function photoBlock(img, idx, total, date, time){
+    const iid=img.ei*20+img.pi+1;
+    let block=`<w:p><w:pPr><w:spacing w:before="${idx===0?120:280}" w:after="0"/><w:jc w:val="center"/></w:pPr><w:r><w:drawing>`;
+    block+=`<wp:inline xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing">`;
+    block+=`<wp:extent cx="${img.cx}" cy="${img.cy}"/>`;
+    block+=`<wp:docPr id="${iid}" name="Photo${iid}" descr="รูปที่ ${idx+1}"/>`;
+    block+=`<wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr>`;
+    block+=`<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">`;
+    block+=`<a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">`;
+    block+=`<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">`;
+    block+=`<pic:nvPicPr><pic:cNvPr id="${iid}" name="Photo${iid}"/><pic:cNvPicPr/></pic:nvPicPr>`;
+    block+=`<pic:blipFill><a:blip r:embed="${img.rId}"><a:extLst><a:ext uri="{28A0092B-C50C-407E-A947-70E740481C1C}"><a14:useLocalDpi xmlns:a14="http://schemas.microsoft.com/office/drawing/2010/main" val="0"/></a:ext></a:extLst></a:blip><a:stretch><a:fillRect/></a:stretch></pic:blipFill>`;
+    block+=`<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${img.cx}" cy="${img.cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>`;
+    block+=`</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`;
+    // caption row: pill-style with photo number + date
+    block+=`<w:p><w:pPr><w:spacing w:before="60" w:after="80"/><w:jc w:val="center"/>
+      <w:pBdr><w:bottom w:val="single" w:sz="1" w:space="1" w:color="D0D8E8"/></w:pBdr></w:pPr>
+      <w:r><w:rPr><w:b/><w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="185FA5"/></w:rPr><w:t xml:space="preserve">[ รูปที่ ${idx+1} / ${total} ]   </w:t></w:r>
+      <w:r><w:rPr><w:i/><w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="888888"/></w:rPr><w:t>บันทึกเมื่อ ${xe(date)} เวลา ${xe(time)}</w:t></w:r>
+    </w:p>`;
+    return block;
+  }
+
+  // ── Cover page ────────────────────────────────────────────────────
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+  const timeStr=now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+  const totalPhotos=entries.reduce((s,e)=>s+(e.photos?.length||0),0);
+
   let body='';
-  const dateStr=new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
 
-  // Cover
-  body+=`<w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="48"/><w:szCs w:val="48"/></w:rPr><w:t>${xe(projName)}</w:t></w:r></w:p>`;
-  body+=`<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:after="360"/></w:pPr><w:r><w:rPr><w:color w:val="888888"/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr><w:t>รายงานภาคสนาม · ${entries.length} รายการ · ${xe(dateStr)}</w:t></w:r></w:p>`;
-  body+=`<w:p><w:pPr><w:spacing w:after="480"/><w:pBdr><w:bottom w:val="single" w:sz="8" w:space="1" w:color="F0A500"/></w:pBdr></w:pPr></w:p>`;
+  // Cover: project name (large, centered)
+  body+=`<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="240" w:after="120"/></w:pPr>
+    <w:r><w:rPr><w:b/><w:sz w:val="56"/><w:szCs w:val="56"/><w:color w:val="111111"/></w:rPr><w:t>${xe(projName)}</w:t></w:r>
+  </w:p>`;
 
+  // Cover: amber underline accent
+  body+=`<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:after="200"/>
+    <w:pBdr><w:bottom w:val="single" w:sz="12" w:space="1" w:color="F0A500"/></w:pBdr></w:pPr>
+    <w:r><w:rPr><w:sz w:val="24"/><w:szCs w:val="24"/><w:color w:val="555555"/></w:rPr><w:t>รายงานภาคสนาม</w:t></w:r>
+  </w:p>`;
+
+  // Cover: summary info table
+  body+=`<w:tbl><w:tblPr>
+    <w:tblW w:w="9006" w:type="dxa"/>
+    <w:tblBorders><w:top w:val="none"/><w:left w:val="none"/><w:bottom w:val="none"/><w:right w:val="none"/><w:insideH w:val="none"/><w:insideV w:val="none"/></w:tblBorders>
+    <w:tblCellMar><w:top w:w="80"/><w:left w:w="0"/><w:bottom w:w="80"/><w:right w:w="0"/></w:tblCellMar>
+  </w:tblPr>
+  ${infoBar('วันที่ออกรายงาน', dateStr + '  เวลา ' + timeStr, 'FFF8E8')}
+  ${infoBar('จำนวนรายการ', entries.length + ' รายการ', 'F5F5F5')}
+  ${infoBar('จำนวนรูปภาพ', totalPhotos + ' รูป', 'FFF8E8')}
+  ${infoBar('ช่วงเวลา', entries.length ? (entries[0].date + ' — ' + entries[entries.length-1].date) : '-', 'F5F5F5')}
+  </w:tbl>`;
+
+  body+=`<w:p><w:pPr><w:spacing w:after="0" w:before="480"/>
+    <w:pBdr><w:bottom w:val="single" w:sz="2" w:space="1" w:color="CCCCCC"/></w:pBdr></w:pPr></w:p>`;
+
+  // ── Entries ───────────────────────────────────────────────────────
   for(let ei=0;ei<entries.length;ei++){
     const e=entries[ei];
-    // Date/time stamp
-    body+=`<w:p><w:pPr><w:spacing w:before="${ei>0?480:0}" w:after="60"/></w:pPr><w:r><w:rPr><w:color w:val="888888"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>${xe(e.date)}   เวลา ${xe(e.time)}</w:t></w:r></w:p>`;
-    // Topic
-    body+=`<w:p><w:pPr><w:spacing w:before="60" w:after="180"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="36"/><w:szCs w:val="36"/></w:rPr><w:t>${xe(e.topic)}</w:t></w:r></w:p>`;
-
-    // Photos
     const entryImgs=imgs.filter(x=>x.ei===ei);
-    for(const img of entryImgs){
-      const iid=ei*10+img.pi+1;
-      body+=`<w:p><w:pPr><w:spacing w:before="${img.pi===0?80:200}" w:after="0"/></w:pPr><w:r><w:drawing>`;
-      body+=`<wp:inline xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing">`;
-      body+=`<wp:extent cx="${img.cx}" cy="${img.cy}"/>`;
-      body+=`<wp:docPr id="${iid}" name="Img${iid}"/>`;
-      body+=`<wp:cNvGraphicFramePr/>`;
-      body+=`<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">`;
-      body+=`<a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">`;
-      body+=`<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">`;
-      body+=`<pic:nvPicPr><pic:cNvPr id="${iid}" name="Img${iid}"/><pic:cNvPicPr/></pic:nvPicPr>`;
-      body+=`<pic:blipFill><a:blip r:embed="${img.rId}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>`;
-      body+=`<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${img.cx}" cy="${img.cy}"/></a:xfrm>`;
-      body+=`<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>`;
-      body+=`</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`;
-      // Caption
-      body+=`<w:p><w:pPr><w:spacing w:before="40" w:after="160"/></w:pPr><w:r><w:rPr><w:i/><w:color w:val="888888"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t>รูปที่ ${img.pi+1}  ·  ${xe(e.date)} ${xe(e.time)}</w:t></w:r></w:p>`;
-    }
 
-    // Detail text
-    if(e.detail){
-      body+=`<w:p><w:pPr><w:spacing w:before="140" w:after="80"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="26"/><w:szCs w:val="26"/><w:color w:val="333333"/></w:rPr><w:t>รายละเอียด</w:t></w:r></w:p>`;
-      for(const line of e.detail.split('\n')){
-        body+=`<w:p><w:pPr><w:spacing w:after="60"/></w:pPr><w:r><w:rPr><w:sz w:val="26"/><w:szCs w:val="26"/></w:rPr><w:t xml:space="preserve">${xe(line||' ')}</w:t></w:r></w:p>`;
+    // Entry header: left-border + number + topic
+    body+=entryHeader(ei+1, e.topic);
+
+    // Info bar table (date, time, photos count)
+    body+=`<w:p><w:pPr><w:spacing w:before="100" w:after="0"/></w:pPr></w:p>`;
+    body+=`<w:tbl><w:tblPr>
+      <w:tblW w:w="9006" w:type="dxa"/>
+      <w:tblBorders><w:top w:val="none"/><w:left w:val="none"/><w:bottom w:val="none"/><w:right w:val="none"/><w:insideH w:val="none"/><w:insideV w:val="none"/></w:tblBorders>
+      <w:tblCellMar><w:top w:w="60"/><w:left w:w="0"/><w:bottom w:w="60"/><w:right w:w="0"/></w:tblCellMar>
+    </w:tblPr>
+    ${infoBar('วันที่', e.date, 'EBF3FB')}
+    ${infoBar('เวลา', e.time, 'F5F5F5')}
+    ${entryImgs.length ? infoBar('รูปภาพ', entryImgs.length + ' รูป', 'EBF3FB') : ''}
+    ${e.lastEdited ? infoBar('แก้ไขล่าสุด', e.lastEdited, 'FFF8F0') : ''}
+    </w:tbl>`;
+
+    // Photos section
+    if(entryImgs.length){
+      body+=sectionLabel('รูปภาพประกอบ');
+      for(const img of entryImgs){
+        body+=photoBlock(img, img.pi, entryImgs.length, e.date, e.time);
       }
     }
 
-    // Divider
+    // Detail section
+    if(e.detail&&e.detail.trim()){
+      body+=sectionLabel('รายละเอียด');
+      // render detail lines; strip [รูปN] tags to plain text ref
+      const detailClean = e.detail.replace(/\[รูป(\d+)\]/g, '[ รูป $1 ]');
+      for(const line of detailClean.split('\n')){
+        body+=`<w:p><w:pPr><w:spacing w:after="80"/><w:ind w:left="120"/></w:pPr>
+          <w:r><w:rPr><w:sz w:val="26"/><w:szCs w:val="26"/><w:color w:val="222222"/></w:rPr>
+          <w:t xml:space="preserve">${xe(line||' ')}</w:t></w:r>
+        </w:p>`;
+      }
+    }
+
+    // Edit history (if any)
+    if(e.editHistory&&e.editHistory.length){
+      body+=sectionLabel('ประวัติการแก้ไข');
+      for(const h of e.editHistory){
+        body+=`<w:p><w:pPr><w:spacing w:after="60"/><w:ind w:left="120"/></w:pPr>
+          <w:r><w:rPr><w:i/><w:sz w:val="20"/><w:szCs w:val="20"/><w:color w:val="888888"/></w:rPr>
+          <w:t>✏  ${xe(h.ts)}  —  ${h.field==='both'?'หัวข้อ + รายละเอียด':h.field==='topic'?'หัวข้อ':'รายละเอียด'}</w:t></w:r>
+        </w:p>`;
+      }
+    }
+
+    // Entry separator (skip last)
     if(ei<entries.length-1){
-      body+=`<w:p><w:pPr><w:spacing w:before="300" w:after="0"/><w:pBdr><w:bottom w:val="single" w:sz="1" w:space="1" w:color="DDDDDD"/></w:pBdr></w:pPr></w:p>`;
+      body+=`<w:p><w:pPr><w:spacing w:before="360" w:after="0"/>
+        <w:pBdr><w:bottom w:val="dashed" w:sz="4" w:space="1" w:color="AAAAAA"/></w:pBdr>
+      </w:pPr></w:p>`;
     }
   }
 
@@ -526,7 +635,7 @@ const dbGetAll=store=>new Promise((res,rej)=>{const r=idbTx(store).getAll();r.on
 const dbPut=(store,obj)=>new Promise((res,rej)=>{const r=idbTx(store,'readwrite').put(obj);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
 const dbDelete=(store,key)=>new Promise((res,rej)=>{const r=idbTx(store,'readwrite').delete(key);r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});
 
-const MAX=5;
+const MAX=10;
 const S={entries:[],projects:[],logs:[],exports:{},photos:[],currentSlot:-1,currentDetailId:null};
 
 window.addEventListener('load',async()=>{
@@ -560,14 +669,58 @@ function nowObj(){ const d=new Date(),p=n=>String(n).padStart(2,'0'); return {Y:
 function initCapture(){ const t=nowObj(); document.getElementById('capture-ts').textContent=`${t.Y}-${t.M}-${t.D}  ${t.h}:${t.m}`; S.photos=[];S.currentSlot=-1; ['topic-input','detail-text'].forEach(id=>document.getElementById(id).value=''); document.getElementById('photo-input').value=''; document.getElementById('new-proj-wrap').style.display='none'; renderSlots(); }
 function onProjChange(sel){ document.getElementById('new-proj-wrap').style.display=sel.value==='__new__'?'block':'none'; }
 function getProjName(){ const sel=document.getElementById('proj-select'); return sel.value==='__new__'?(document.getElementById('new-proj-name').value.trim()||'โครงการใหม่'):sel.value; }
-function renderSlots(){ const g=document.getElementById('photo-grid'); g.innerHTML=''; for(let i=0;i<MAX;i++){ const s=document.createElement('div'); s.className='photo-slot'+(S.photos[i]?' filled':''); if(S.photos[i]){ s.innerHTML=`<img src="${S.photos[i].dataURL}"><span class="slot-num">${i+1}</span><button class="slot-del" onclick="rmPhoto(event,${i})">✕</button>`; }else{ s.innerHTML='<span class="slot-add">📷</span>'; s.onclick=()=>openSlot(i); } g.appendChild(s); } document.getElementById('photo-count-label').textContent=`${S.photos.filter(Boolean).length} / ${MAX} รูป`; }
-function openSlot(i){ if(S.photos.filter(Boolean).length>=MAX){showToast('ครบ 5 รูปแล้ว','error');return;} S.currentSlot=i; document.getElementById('photo-input').click(); }
+function renderSlots(){
+  const g=document.getElementById('photo-grid'); g.innerHTML='';
+  for(let i=0;i<MAX;i++){
+    const s=document.createElement('div');
+    s.className='photo-slot'+(S.photos[i]?' filled':'');
+    if(S.photos[i]){
+      s.innerHTML=`<img src="${S.photos[i].dataURL}"><span class="slot-num">${i+1}</span><button class="slot-del" onclick="rmPhoto(event,${i})">✕</button>`;
+    }else{
+      s.innerHTML='<span class="slot-add">📷</span>';
+      s.onclick=()=>openSlot(i);
+    }
+    g.appendChild(s);
+  }
+  const filled=S.photos.filter(Boolean).length;
+  document.getElementById('photo-count-label').textContent=`${filled} / ${MAX} รูป`;
+  // render ref chips
+  const rc=document.getElementById('ref-chips');
+  const rh=document.getElementById('ref-hint');
+  if(rc){
+    if(filled>0){
+      rh.style.display='block';
+      rc.innerHTML=Array.from({length:filled},(_,i)=>
+        `<button class="ref-chip" onclick="insertRef(${i+1})" title="แทรก [รูป${i+1}] ในรายละเอียด">[รูป${i+1}]</button>`
+      ).join('');
+    }else{
+      rh.style.display='none';
+      rc.innerHTML='';
+    }
+  }
+}
+
+function insertRef(n){
+  const ta=document.getElementById('detail-text');
+  if(!ta) return;
+  ta.focus();
+  const tag=`[รูป${n}]`;
+  const start=ta.selectionStart, end=ta.selectionEnd;
+  const before=ta.value.slice(0,start), after=ta.value.slice(end);
+  const sep=before&&!before.endsWith(' ')&&!before.endsWith('\n')?' ':'';
+  ta.value=before+sep+tag+' '+after;
+  const pos=start+sep.length+tag.length+1;
+  ta.selectionStart=ta.selectionEnd=pos;
+  ta.dispatchEvent(new Event('input'));
+  showToast(`✓ แทรก ${tag}`, 'success');
+}
+function openSlot(i){ if(S.photos.filter(Boolean).length>=MAX){showToast('ครบ 10 รูปแล้ว','error');return;} S.currentSlot=i; document.getElementById('photo-input').click(); }
 function handlePhoto(input){ const file=input.files[0]; if(!file||!file.type.startsWith('image/')) return; const r=new FileReader(); r.onload=e=>compress(e.target.result,1200,.82).then(url=>{ const idx=S.currentSlot>=0?S.currentSlot:S.photos.filter(Boolean).length; if(idx>=MAX) return; S.photos[idx]={dataURL:url,filename:file.name}; renderSlots(); input.value=''; S.currentSlot=-1; }); r.readAsDataURL(file); }
 function handleGallery(input){
   const files=Array.from(input.files);
   if(!files.length) return;
   const available=MAX-S.photos.filter(Boolean).length;
-  if(available<=0){showToast('ครบ 5 รูปแล้ว','error');input.value='';return;}
+  if(available<=0){showToast('ครบ 10 รูปแล้ว','error');input.value='';return;}
   const toLoad=files.slice(0,available);
   if(files.length>available) showToast(`เลือกได้อีก ${available} รูป (ตัดเหลือ ${available})`, 'error');
   let done=0;
@@ -689,7 +842,7 @@ function showDetail(id){
     gridEl.innerHTML=photos.map((p,i)=>`<div class="detail-photo-cell" onclick="openLightbox(${i})"><img src="${p.dataURL}" loading="lazy"><div class="photo-index">${i+1}/${photos.length}</div></div>`).join('');
   }else{labelEl.style.display='none';gridEl.innerHTML='';}
   document.getElementById('detail-topic-view').textContent=e.topic;
-  document.getElementById('detail-body').textContent=e.detail||'(ไม่มีรายละเอียด)';
+  renderDetailBody(e.detail||'(ไม่มีรายละเอียด)', (e.photos||[]).length);
   // Edit history
   const histEl=document.getElementById('detail-edit-history');
   if(e.editHistory&&e.editHistory.length){
@@ -699,6 +852,35 @@ function showDetail(id){
       `</div>`;
   }else{histEl.style.display='none';}
   goTo('screen-detail');
+}
+
+function renderDetailBody(text, photoCount){
+  const el=document.getElementById('detail-body');
+  if(!text||text==='(ไม่มีรายละเอียด)'){ el.textContent='(ไม่มีรายละเอียด)'; return; }
+  // Parse [รูปN] tags into clickable chips
+  const parts=text.split(/(\[รูป\d+\])/g);
+  el.innerHTML='';
+  parts.forEach(part=>{
+    const m=part.match(/^\[รูป(\d+)\]$/);
+    if(m){
+      const n=parseInt(m[1]);
+      const span=document.createElement('span');
+      if(n>=1&&n<=photoCount){
+        span.className='ref-tag';
+        span.textContent='📷 รูป'+n;
+        span.title='แตะเพื่อดูรูปที่ '+n;
+        span.onclick=()=>openLightbox(n-1);
+      }else{
+        // ref to nonexistent photo — show grayed out
+        span.className='ref-tag';
+        span.style.opacity='.4';span.style.pointerEvents='none';
+        span.textContent='📷 รูป'+n;
+      }
+      el.appendChild(span);
+    }else{
+      el.appendChild(document.createTextNode(part));
+    }
+  });
 }
 
 function startEdit(){
