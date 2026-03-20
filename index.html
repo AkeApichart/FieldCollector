@@ -368,11 +368,17 @@ textarea.edit-input{resize:none;min-height:120px}
   <div id="share-sheet" onclick="event.stopPropagation()">
     <div id="share-sheet-title">ส่งออกไฟล์</div>
     <div id="share-sheet-fname"></div>
-    <div class="share-option" onclick="doShare()">
+    <div class="share-option" id="share-option-cloud" onclick="doShare()" style="display:none">
       <div class="share-option-icon">📤</div>
       <div>
         <div class="share-option-label">แชร์ / บันทึกไปยัง Cloud</div>
         <div class="share-option-sub">Google Drive · OneDrive · Files · LINE ฯลฯ</div>
+      </div>
+    </div>
+    <div id="share-option-unsupported" style="display:none;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:var(--card);margin-bottom:8px">
+      <div style="font-size:12px;color:var(--muted);line-height:1.7">
+        📱 Browser นี้ไม่รองรับการแชร์ไฟล์<br>
+        กรุณาดาวน์โหลดก่อน แล้วค่อยอัปโหลดเข้า Drive
       </div>
     </div>
     <div class="share-option" onclick="doDownload()">
@@ -1133,13 +1139,21 @@ async function exportWord(projName){
 }
 
 // ═══════════════════════════════════════════════
-//  Share Bottom Sheet — ถามผู้ใช้ก่อน share/download
+//  Share Bottom Sheet
 // ═══════════════════════════════════════════════
 let _pendingBlob=null, _pendingFname='', _pendingProjName='';
 
 async function shareOrDownload(blob, fname, projName){
   _pendingBlob=blob; _pendingFname=fname; _pendingProjName=projName;
   document.getElementById('share-sheet-fname').textContent=fname;
+
+  // ตรวจสอบว่า browser รองรับ share ไฟล์ .docx หรือไม่
+  const testFile=new File([blob], fname, {type:blob.type});
+  const canShare = !!(navigator.canShare && navigator.canShare({files:[testFile]}));
+
+  document.getElementById('share-option-cloud').style.display = canShare ? 'flex' : 'none';
+  document.getElementById('share-option-unsupported').style.display = canShare ? 'none' : 'block';
+
   document.getElementById('share-sheet-backdrop').classList.add('open');
 }
 
@@ -1148,21 +1162,20 @@ function closeShareSheet(){
 }
 
 async function doShare(){
-  closeShareSheet();
+  // ปิด sheet ก่อน — แต่ต้อง call share ก่อน close เพื่อให้ user gesture ยังอยู่
   if(!_pendingBlob) return;
   const file=new File([_pendingBlob], _pendingFname, {type:_pendingBlob.type});
-  if(navigator.canShare && navigator.canShare({files:[file]})){
-    try{
-      await navigator.share({files:[file], title:_pendingFname, text:`รายงานภาคสนาม — ${_pendingProjName}`});
-      showToast('📤 แชร์แล้ว','success');
-      return;
-    }catch(err){
-      if(err.name==='AbortError') return;
-      console.warn('Share failed:', err);
-    }
+  try{
+    await navigator.share({files:[file], title:_pendingFname, text:`รายงานภาคสนาม — ${_pendingProjName}`});
+    closeShareSheet();
+    showToast('📤 แชร์แล้ว','success');
+  }catch(err){
+    closeShareSheet();
+    if(err.name==='AbortError') return; // ผู้ใช้กด Cancel เอง
+    // share error จริง — แจ้งให้รู้ ไม่ download แบบเงียบ
+    showToast('⚠ แชร์ไม่สำเร็จ ลองดาวน์โหลดแทน','error');
+    console.error('Share error:', err.name, err.message);
   }
-  // fallback ถ้า canShare=false
-  doDownload();
 }
 
 function doDownload(){
