@@ -500,9 +500,9 @@ async function buildDocx(projName, entries){
     const sh=shadeHex||'EBF3FB';
     return `<w:tr>
       <w:tc><w:tcPr><w:tcW w:w="1800" w:type="dxa"/><w:shd w:val="clear" w:fill="${sh}"/><w:tcMar><w:top w:w="80"/><w:bottom w:w="80"/><w:left w:w="120"/><w:right w:w="80"/></w:tcMar></w:tcPr>
-        <w:p><w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/><w:color w:val="185FA5"/></w:rPr><w:t>${label}</w:t></w:r></w:p></w:tc>
+        <w:p><w:r><w:rPr><w:b/><w:sz w:val="28"/><w:szCs w:val="28"/><w:color w:val="185FA5"/></w:rPr><w:t>${label}</w:t></w:r></w:p></w:tc>
       <w:tc><w:tcPr><w:tcW w:w="7206" w:type="dxa"/><w:shd w:val="clear" w:fill="${sh}"/><w:tcMar><w:top w:w="80"/><w:bottom w:w="80"/><w:left w:w="80"/><w:right w:w="120"/></w:tcMar></w:tcPr>
-        <w:p><w:r><w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/><w:color w:val="333333"/></w:rPr><w:t>${value}</w:t></w:r></w:p></w:tc>
+        <w:p><w:r><w:rPr><w:sz w:val="28"/><w:szCs w:val="28"/><w:color w:val="333333"/></w:rPr><w:t>${value}</w:t></w:r></w:p></w:tc>
     </w:tr>`;
   }
 
@@ -511,15 +511,15 @@ async function buildDocx(projName, entries){
     return `<w:p><w:pPr><w:spacing w:before="480" w:after="0"/>
       <w:pBdr><w:left w:val="single" w:sz="24" w:space="6" w:color="F0A500"/></w:pBdr>
       <w:ind w:left="180"/></w:pPr>
-      <w:r><w:rPr><w:color w:val="C07800"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t xml:space="preserve">รายการที่ ${num}   </w:t></w:r>
-      <w:r><w:rPr><w:b/><w:sz w:val="34"/><w:szCs w:val="34"/><w:color w:val="111111"/></w:rPr><w:t>${xe(topic)}</w:t></w:r>
+      <w:r><w:rPr><w:color w:val="C07800"/><w:sz w:val="28"/><w:szCs w:val="28"/></w:rPr><w:t xml:space="preserve">รายการที่ ${num}   </w:t></w:r>
+      <w:r><w:rPr><w:b/><w:sz w:val="40"/><w:szCs w:val="40"/><w:color w:val="111111"/></w:rPr><w:t>${xe(topic)}</w:t></w:r>
     </w:p>`;
   }
 
   // section label (small amber caps)
   function sectionLabel(text){
     return `<w:p><w:pPr><w:spacing w:before="200" w:after="60"/></w:pPr>
-      <w:r><w:rPr><w:b/><w:caps/><w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="C07800"/></w:rPr><w:t>${text}</w:t></w:r>
+      <w:r><w:rPr><w:b/><w:caps/><w:sz w:val="28"/><w:szCs w:val="28"/><w:color w:val="C07800"/></w:rPr><w:t>${text}</w:t></w:r>
     </w:p>`;
   }
 
@@ -541,8 +541,8 @@ async function buildDocx(projName, entries){
     // caption row: pill-style with photo number + date
     block+=`<w:p><w:pPr><w:spacing w:before="60" w:after="80"/><w:jc w:val="center"/>
       <w:pBdr><w:bottom w:val="single" w:sz="1" w:space="1" w:color="D0D8E8"/></w:pBdr></w:pPr>
-      <w:r><w:rPr><w:b/><w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="185FA5"/></w:rPr><w:t xml:space="preserve">[ รูปที่ ${idx+1} / ${total} ]   </w:t></w:r>
-      <w:r><w:rPr><w:i/><w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="888888"/></w:rPr><w:t>บันทึกเมื่อ ${xe(date)} เวลา ${xe(time)}</w:t></w:r>
+      <w:r><w:rPr><w:b/><w:sz w:val="28"/><w:szCs w:val="28"/><w:color w:val="185FA5"/></w:rPr><w:t xml:space="preserve">[ รูปที่ ${idx+1} / ${total} ]   </w:t></w:r>
+      <w:r><w:rPr><w:i/><w:sz w:val="28"/><w:szCs w:val="28"/><w:color w:val="888888"/></w:rPr><w:t>บันทึกเมื่อ ${xe(date)} เวลา ${xe(time)}</w:t></w:r>
     </w:p>`;
     return block;
   }
@@ -557,13 +557,13 @@ async function buildDocx(projName, entries){
 
   // Cover: project name (large, centered)
   body+=`<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="240" w:after="120"/></w:pPr>
-    <w:r><w:rPr><w:b/><w:sz w:val="56"/><w:szCs w:val="56"/><w:color w:val="111111"/></w:rPr><w:t>${xe(projName)}</w:t></w:r>
+    <w:r><w:rPr><w:b/><w:sz w:val="64"/><w:szCs w:val="64"/><w:color w:val="111111"/></w:rPr><w:t>${xe(projName)}</w:t></w:r>
   </w:p>`;
 
   // Cover: amber underline accent
   body+=`<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:after="200"/>
     <w:pBdr><w:bottom w:val="single" w:sz="12" w:space="1" w:color="F0A500"/></w:pBdr></w:pPr>
-    <w:r><w:rPr><w:sz w:val="24"/><w:szCs w:val="24"/><w:color w:val="555555"/></w:rPr><w:t>รายงานภาคสนาม</w:t></w:r>
+    <w:r><w:rPr><w:sz w:val="28"/><w:szCs w:val="28"/><w:color w:val="555555"/></w:rPr><w:t>รายงานภาคสนาม</w:t></w:r>
   </w:p>`;
 
   // Cover: summary info table
@@ -617,7 +617,7 @@ async function buildDocx(projName, entries){
       const detailClean = e.detail.replace(/\[รูป(\d+)\]/g, '[ รูป $1 ]');
       for(const line of detailClean.split('\n')){
         body+=`<w:p><w:pPr><w:spacing w:after="80"/><w:ind w:left="120"/></w:pPr>
-          <w:r><w:rPr><w:sz w:val="26"/><w:szCs w:val="26"/><w:color w:val="222222"/></w:rPr>
+          <w:r><w:rPr><w:sz w:val="28"/><w:szCs w:val="28"/><w:color w:val="222222"/></w:rPr>
           <w:t xml:space="preserve">${xe(line||' ')}</w:t></w:r>
         </w:p>`;
       }
@@ -628,7 +628,7 @@ async function buildDocx(projName, entries){
       body+=sectionLabel('ประวัติการแก้ไข');
       for(const h of e.editHistory){
         body+=`<w:p><w:pPr><w:spacing w:after="60"/><w:ind w:left="120"/></w:pPr>
-          <w:r><w:rPr><w:i/><w:sz w:val="20"/><w:szCs w:val="20"/><w:color w:val="888888"/></w:rPr>
+          <w:r><w:rPr><w:i/><w:sz w:val="28"/><w:szCs w:val="28"/><w:color w:val="888888"/></w:rPr>
           <w:t>✏  ${xe(h.ts)}  —  ${h.field}</w:t></w:r>
         </w:p>`;
       }
@@ -679,7 +679,7 @@ async function buildDocx(projName, entries){
 <w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
 <w:docDefaults><w:rPrDefault><w:rPr>
 <w:rFonts w:ascii="Angsana New" w:hAnsi="Angsana New" w:cs="Angsana New"/>
-<w:sz w:val="26"/><w:szCs w:val="26"/>
+<w:sz w:val="28"/><w:szCs w:val="28"/>
 </w:rPr></w:rPrDefault></w:docDefaults>
 </w:styles>`;
 
