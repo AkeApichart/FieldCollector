@@ -787,6 +787,25 @@ function renderSlots(){
       rc.innerHTML='';
     }
   }
+  // caption inputs
+  const capWrap=document.getElementById('photo-captions-wrap');
+  const capList=document.getElementById('photo-captions');
+  if(capWrap && capList){
+    if(filled>0){
+      capWrap.style.display='block';
+      // save current values before re-render
+      capList.querySelectorAll('.caption-input').forEach((inp,i)=>{ S.captions[i]=inp.value; });
+      capList.innerHTML=Array.from({length:filled},(_,i)=>`
+        <div class="caption-row">
+          <span class="caption-num">รูป ${i+1}</span>
+          <input class="caption-input" id="cap-${i}" placeholder="คำบรรยายรูปที่ ${i+1}" value="${(S.captions[i]||'').replace(/"/g,'&quot;')}">
+        </div>`).join('');
+    }else{
+      capWrap.style.display='none';
+      capList.innerHTML='';
+      S.captions=[];
+    }
+  }
 }
 
 function insertRef(n){
