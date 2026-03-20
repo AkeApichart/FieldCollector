@@ -175,6 +175,15 @@ textarea.edit-input{resize:none;min-height:120px}
 .share-option-sub{font-size:11px;color:var(--muted);margin-top:2px}
 .share-cancel{width:100%;padding:13px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:var(--sans);font-size:14px;cursor:pointer;margin-top:4px}
 
+
+/* Photo caption inputs */
+.photo-captions{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.caption-row{display:flex;align-items:center;gap:8px}
+.caption-num{font-family:var(--mono);font-size:10px;color:var(--accent2);background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.25);border-radius:5px;padding:3px 7px;white-space:nowrap;flex-shrink:0}
+.caption-input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--sans);font-size:13px;padding:8px 11px;outline:none;transition:border-color .15s}
+.caption-input:focus{border-color:var(--accent2)}
+.caption-input::placeholder{color:var(--muted)}
+
 .section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .section-label{font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
 .link-btn{font-size:12px;background:none;border:none;color:var(--accent2);cursor:pointer;font-family:var(--sans)}
@@ -250,6 +259,10 @@ textarea.edit-input{resize:none;min-height:120px}
       <div class="photo-count-label" id="photo-count-label">0 / 10 รูป</div>
       <div class="ref-chips" id="ref-chips"></div>
       <div class="ref-hint" id="ref-hint" style="display:none">แตะปุ่มเพื่อแทรกหมายเลขรูปในช่องรายละเอียด</div>
+      <div id="photo-captions-wrap" style="display:none">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-top:10px;margin-bottom:6px">คำบรรยายรูป (ไม่บังคับ)</div>
+        <div class="photo-captions" id="photo-captions"></div>
+      </div>
       <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(this)">
       <input type="file" id="gallery-input" accept="image/*" multiple style="display:none" onchange="handleGallery(this)">
       <div style="display:flex;gap:8px;margin-top:8px">
@@ -305,10 +318,14 @@ textarea.edit-input{resize:none;min-height:120px}
       <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:4px;margin-bottom:6px" id="edit-photo-count">0 / 10 รูป</div>
       <input type="file" id="edit-photo-input" accept="image/*" capture="environment" style="display:none" onchange="handleEditPhoto(this)">
       <input type="file" id="edit-gallery-input" accept="image/*" multiple style="display:none" onchange="handleEditGallery(this)">
-      <div style="display:flex;gap:8px;margin-bottom:14px">
+      <div style="display:flex;gap:8px;margin-bottom:10px">
         <button type="button" onclick="document.getElementById('edit-gallery-input').click()" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);font-family:var(--sans);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
           🖼 เลือกจากคลัง
         </button>
+      </div>
+      <div id="edit-captions-wrap" style="display:none;margin-bottom:14px">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">คำบรรยายรูป (ไม่บังคับ)</div>
+        <div class="photo-captions" id="edit-captions"></div>
       </div>
 
       <!-- ref chips for edit detail -->
@@ -524,7 +541,7 @@ async function buildDocx(projName, entries){
   }
 
   // photo with rounded-corner style caption
-  function photoBlock(img, idx, total, date, time){
+  function photoBlock(img, idx, total, date, time, caption){
     const iid=img.ei*20+img.pi+1;
     let block=`<w:p><w:pPr><w:spacing w:before="${idx===0?120:280}" w:after="0"/><w:jc w:val="center"/></w:pPr><w:r><w:drawing>`;
     block+=`<wp:inline xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing">`;
@@ -538,11 +555,13 @@ async function buildDocx(projName, entries){
     block+=`<pic:blipFill><a:blip r:embed="${img.rId}"><a:extLst><a:ext uri="{28A0092B-C50C-407E-A947-70E740481C1C}"><a14:useLocalDpi xmlns:a14="http://schemas.microsoft.com/office/drawing/2010/main" val="0"/></a:ext></a:extLst></a:blip><a:stretch><a:fillRect/></a:stretch></pic:blipFill>`;
     block+=`<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${img.cx}" cy="${img.cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>`;
     block+=`</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`;
-    // caption row: pill-style with photo number + date
+    // caption row
+    const capText = caption ? xe(caption) : '';
     block+=`<w:p><w:pPr><w:spacing w:before="60" w:after="80"/><w:jc w:val="center"/>
       <w:pBdr><w:bottom w:val="single" w:sz="1" w:space="1" w:color="D0D8E8"/></w:pBdr></w:pPr>
-      <w:r><w:rPr><w:b/><w:sz w:val="28"/><w:szCs w:val="28"/><w:color w:val="185FA5"/></w:rPr><w:t xml:space="preserve">[ รูปที่ ${idx+1} / ${total} ]   </w:t></w:r>
-      <w:r><w:rPr><w:i/><w:sz w:val="28"/><w:szCs w:val="28"/><w:color w:val="888888"/></w:rPr><w:t>บันทึกเมื่อ ${xe(date)} เวลา ${xe(time)}</w:t></w:r>
+      <w:r><w:rPr><w:b/><w:sz w:val="28"/><w:szCs w:val="28"/><w:color w:val="185FA5"/></w:rPr><w:t xml:space="preserve">[ รูปที่ ${idx+1} / ${total} ]${capText?'   ':''}</w:t></w:r>
+      ${capText ? `<w:r><w:rPr><w:sz w:val="28"/><w:szCs w:val="28"/><w:color w:val="222222"/></w:rPr><w:t xml:space="preserve">${capText}   </w:t></w:r>` : ''}
+      <w:r><w:rPr><w:i/><w:sz w:val="26"/><w:szCs w:val="26"/><w:color w:val="AAAAAA"/></w:rPr><w:t>${xe(date)} ${xe(time)}</w:t></w:r>
     </w:p>`;
     return block;
   }
@@ -606,7 +625,7 @@ async function buildDocx(projName, entries){
     if(entryImgs.length){
       body+=sectionLabel('รูปภาพประกอบ');
       for(const img of entryImgs){
-        body+=photoBlock(img, img.pi, entryImgs.length, e.date, e.time);
+        body+=photoBlock(img, img.pi, entryImgs.length, e.date, e.time, (e.captions||[])[img.pi]||'');
       }
     }
 
@@ -706,7 +725,7 @@ const dbPut=(store,obj)=>new Promise((res,rej)=>{const r=idbTx(store,'readwrite'
 const dbDelete=(store,key)=>new Promise((res,rej)=>{const r=idbTx(store,'readwrite').delete(key);r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});
 
 const MAX=10;
-const S={entries:[],projects:[],logs:[],exports:{},photos:[],currentSlot:-1,currentDetailId:null,editPhotos:[],editCurrentSlot:-1};
+const S={entries:[],projects:[],logs:[],exports:{},photos:[],captions:[],currentSlot:-1,currentDetailId:null,editPhotos:[],editCaptions:[],editCurrentSlot:-1};
 
 window.addEventListener('load',async()=>{
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
@@ -736,7 +755,7 @@ function goTo(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.r
 function switchTab(t){ goTo({home:'screen-home',log:'screen-log'}[t]); if(t==='log') renderLog(); }
 function nowObj(){ const d=new Date(),p=n=>String(n).padStart(2,'0'); return {Y:d.getFullYear(),M:p(d.getMonth()+1),D:p(d.getDate()),h:p(d.getHours()),m:p(d.getMinutes()),s:p(d.getSeconds()),display:d.toLocaleString('th-TH'),iso:d.toISOString(),fn:`${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`}; }
 
-function initCapture(){ const t=nowObj(); document.getElementById('capture-ts').textContent=`${t.Y}-${t.M}-${t.D}  ${t.h}:${t.m}`; S.photos=[];S.currentSlot=-1; ['topic-input','detail-text'].forEach(id=>document.getElementById(id).value=''); document.getElementById('photo-input').value=''; document.getElementById('new-proj-wrap').style.display='none'; renderSlots(); }
+function initCapture(){ const t=nowObj(); document.getElementById('capture-ts').textContent=`${t.Y}-${t.M}-${t.D}  ${t.h}:${t.m}`; S.photos=[];S.captions=[];S.currentSlot=-1; ['topic-input','detail-text'].forEach(id=>document.getElementById(id).value=''); document.getElementById('photo-input').value=''; document.getElementById('new-proj-wrap').style.display='none'; renderSlots(); }
 function onProjChange(sel){ document.getElementById('new-proj-wrap').style.display=sel.value==='__new__'?'block':'none'; }
 function getProjName(){ const sel=document.getElementById('proj-select'); return sel.value==='__new__'?(document.getElementById('new-proj-name').value.trim()||'โครงการใหม่'):sel.value; }
 function renderSlots(){
@@ -813,10 +832,13 @@ function compress(src,maxPx,q){ return new Promise(res=>{ const img=new Image();
 function rmPhoto(e,i){ e.stopPropagation(); S.photos[i]=null; S.photos=S.photos.filter(Boolean); renderSlots(); }
 
 async function submitEntry(){
+  // collect caption values before submit
+  const capInputs=document.querySelectorAll('#photo-captions .caption-input');
+  capInputs.forEach((inp,i)=>{ S.captions[i]=inp.value.trim(); });
   const proj=getProjName(),topic=document.getElementById('topic-input').value.trim(),detail=document.getElementById('detail-text').value.trim(),filled=S.photos.filter(Boolean);
   if(!proj){showToast('⚠ เลือกโครงการก่อน','error');return;} if(!topic){showToast('⚠ ใส่หัวข้อก่อน','error');return;} if(!detail&&!filled.length){showToast('⚠ เพิ่มรูปหรือรายละเอียด','error');return;}
   const t=nowObj();
-  const entry={id:`${t.fn}_${Math.random().toString(36).slice(2,5)}`,project:proj,topic,detail,photos:[...filled],timestamp_iso:t.iso,timestamp_display:t.display,date:`${t.Y}-${t.M}-${t.D}`,time:`${t.h}:${t.m}:${t.s}`,filename:`${t.fn}_${proj.replace(/[^\w\u0E00-\u0E7Fa-zA-Z0-9]/g,'_')}`};
+  const entry={id:`${t.fn}_${Math.random().toString(36).slice(2,5)}`,project:proj,topic,detail,photos:[...filled],captions:[...S.captions.slice(0,filled.length)],timestamp_iso:t.iso,timestamp_display:t.display,date:`${t.Y}-${t.M}-${t.D}`,time:`${t.h}:${t.m}:${t.s}`,filename:`${t.fn}_${proj.replace(/[^\w\u0E00-\u0E7Fa-zA-Z0-9]/g,'_')}`};
   showOverlay('กำลังบันทึก...');
   try{
     await dbPut('entries',entry);
@@ -907,9 +929,17 @@ function showDetail(id){
   const photos=e.photos||[];
   const gridEl=document.getElementById('detail-photo-grid');
   const labelEl=document.getElementById('detail-photo-label');
+  const captions=e.captions||[];
   if(photos.length){
     labelEl.style.display='block';
-    gridEl.innerHTML=photos.map((p,i)=>`<div class="detail-photo-cell" onclick="openLightbox(${i})"><img src="${p.dataURL}" loading="lazy"><div class="photo-index">${i+1}/${photos.length}</div></div>`).join('');
+    gridEl.innerHTML=photos.map((p,i)=>`
+      <div>
+        <div class="detail-photo-cell" onclick="openLightbox(${i})">
+          <img src="${p.dataURL}" loading="lazy">
+          <div class="photo-index">${i+1}/${photos.length}</div>
+        </div>
+        ${captions[i]?`<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:4px;padding:0 2px;line-height:1.4">${captions[i]}</div>`:''}
+      </div>`).join('');
   }else{labelEl.style.display='none';gridEl.innerHTML='';}
   document.getElementById('detail-topic-view').textContent=e.topic;
   renderDetailBody(e.detail||'(ไม่มีรายละเอียด)', (e.photos||[]).length);
@@ -957,8 +987,9 @@ function startEdit(){
   const e=S.entries.find(x=>x.id===S.currentDetailId);if(!e)return;
   document.getElementById('edit-topic').value=e.topic;
   document.getElementById('edit-detail').value=e.detail||'';
-  // copy photos to edit buffer
+  // copy photos + captions to edit buffer
   S.editPhotos=[...(e.photos||[])];
+  S.editCaptions=[...(e.captions||[])];
   renderEditSlots();
   document.getElementById('detail-view-mode').style.display='none';
   document.getElementById('detail-edit-mode').style.display='block';
@@ -994,6 +1025,24 @@ function renderEditSlots(){
     }else{
       if(rh) rh.style.display='none';
       rc.innerHTML='';
+    }
+  }
+  // caption inputs in edit mode
+  const ecWrap=document.getElementById('edit-captions-wrap');
+  const ecList=document.getElementById('edit-captions');
+  if(ecWrap && ecList){
+    if(filled>0){
+      ecWrap.style.display='block';
+      // save current values
+      ecList.querySelectorAll('.caption-input').forEach((inp,i)=>{ S.editCaptions[i]=inp.value; });
+      ecList.innerHTML=Array.from({length:filled},(_,i)=>`
+        <div class="caption-row">
+          <span class="caption-num">รูป ${i+1}</span>
+          <input class="caption-input" id="ecap-${i}" placeholder="คำบรรยายรูปที่ ${i+1} (ไม่บังคับ)" value="${(S.editCaptions[i]||'').replace(/"/g,'&quot;')}">
+        </div>`).join('');
+    }else{
+      ecWrap.style.display='none';
+      ecList.innerHTML='';
     }
   }
 }
@@ -1069,6 +1118,9 @@ function cancelEdit(){
 async function saveEdit(){
   const id=S.currentDetailId;
   const e=S.entries.find(x=>x.id===id);if(!e)return;
+  // collect caption values
+  document.querySelectorAll('#edit-captions .caption-input').forEach((inp,i)=>{ S.editCaptions[i]=inp.value.trim(); });
+  const newCaptions=[...S.editCaptions.slice(0,S.editPhotos.filter(Boolean).length)];
   const newTopic=document.getElementById('edit-topic').value.trim();
   const newDetail=document.getElementById('edit-detail').value.trim();
   if(!newTopic){showToast('⚠ หัวข้อห้ามว่าง','error');return;}
@@ -1095,6 +1147,7 @@ async function saveEdit(){
   e.topic=newTopic;
   e.detail=newDetail;
   if(photosChanged) e.photos=S.editPhotos.filter(Boolean);
+  e.captions=newCaptions;
   e.editHistory=e.editHistory||[];
   e.editHistory.push(histEntry);
   e.lastEdited=ts.display;
