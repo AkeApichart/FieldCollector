@@ -1086,12 +1086,43 @@ async function exportWord(projName){
     const blob=await buildDocx(projName,entries);
     const t=nowObj(),safe=projName.replace(/[^\w\u0E00-\u0E7Fa-zA-Z0-9]/g,'_');
     const fname=`${t.fn}_${safe}.docx`;
-    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fname;a.click();URL.revokeObjectURL(a.href);
+    await shareOrDownload(blob, fname, projName);
     const log={time:new Date().toLocaleString('th-TH'),msg:`ส่งออก Word: ${fname}`,type:'blue'};await dbPut('logs',log);S.logs.unshift(log);
     const expRec={project:projName,date:t.fn,display:new Date().toLocaleString('th-TH'),fname};
     await dbPut('exports',expRec);S.exports[projName]=expRec;
-    hideOverlay();showToast(`📄 ${fname}`,'success');
+    hideOverlay();
   }catch(err){hideOverlay();showToast('❌ '+err.message,'error');console.error(err);}
+}
+
+// ═══════════════════════════════════════════════
+//  Share or Download — Web Share API + fallback
+// ═══════════════════════════════════════════════
+async function shareOrDownload(blob, fname, projName){
+  const file = new File([blob], fname, {type: blob.type});
+
+  // Web Share API level 2 (รองรับ file) — iOS 15+ / Android Chrome 76+
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    try{
+      await navigator.share({
+        files: [file],
+        title: fname,
+        text: `รายงานภาคสนาม — ${projName}`,
+      });
+      showToast('📤 แชร์แล้ว', 'success');
+      return;
+    }catch(err){
+      // ผู้ใช้กด Cancel หรือ share ล้มเหลว → fallback ดาวน์โหลด
+      if(err.name === 'AbortError') return; // ยกเลิกเอง ไม่ต้องทำอะไร
+      console.warn('Share failed, fallback to download:', err);
+    }
+  }
+
+  // Fallback: download ปกติ (desktop / browser ที่ไม่รองรับ Share API)
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = fname; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 3000);
+  showToast(`⬇ ${fname}`, 'success');
 }
 
 async function exportAllLog(){
