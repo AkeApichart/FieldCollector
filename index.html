@@ -92,6 +92,21 @@ html,body{height:100%;overflow:hidden;background:var(--bg)}
 #lb-dots{display:flex;gap:6px;justify-content:center;flex:1}
 .lb-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.3);transition:all .2s}
 .lb-dot.active{background:#fff;width:18px;border-radius:3px}
+
+/* Lightbox caption */
+#lb-caption{
+  position:absolute;bottom:60px;left:0;right:0;
+  padding:10px 20px;
+  text-align:center;
+  font-size:14px;color:rgba(255,255,255,.95);
+  font-family:var(--sans);line-height:1.5;
+  text-shadow:0 1px 4px rgba(0,0,0,.8);
+  pointer-events:none;
+  z-index:2;
+  transition:opacity .25s;
+  min-height:0;
+}
+
 #lb-download{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.15);border:none;cursor:pointer;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center}
 .proj-group{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px}
 .proj-group-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
@@ -373,6 +388,7 @@ textarea.edit-input{resize:none;min-height:120px}
     <div id="lb-slides"></div>
     <button class="lb-arrow" id="lb-next" onclick="lbGo(1)">›</button>
   </div>
+  <div id="lb-caption"></div>
   <div id="lb-footer">
     <div style="width:36px"></div>
     <div id="lb-dots"></div>
@@ -1297,10 +1313,10 @@ async function exportAllLog(){
 // ═══════════════════════════════════════════════
 //  Lightbox
 // ═══════════════════════════════════════════════
-let LB={photos:[],idx:0,touchX:0,dragging:false,dragDX:0};
+let LB={photos:[],captions:[],idx:0,touchX:0,dragging:false,dragDX:0};
 function openLightbox(startIdx){
   const e=S.entries.find(x=>x.id===S.currentDetailId);if(!e||!e.photos?.length) return;
-  LB.photos=e.photos;LB.idx=startIdx;
+  LB.photos=e.photos;LB.captions=e.captions||[];LB.idx=startIdx;
   const vw=Math.min(window.innerWidth,480);
   const slides=document.getElementById('lb-slides');
   slides.style.transition='none';
@@ -1322,6 +1338,12 @@ function lbUI(){
   document.getElementById('lb-prev').style.opacity=LB.idx===0?'0.2':'1';
   document.getElementById('lb-next').style.opacity=LB.idx===LB.photos.length-1?'0.2':'1';
   document.getElementById('lb-dots').innerHTML=LB.photos.map((_,i)=>`<div class="lb-dot${i===LB.idx?' active':''}"></div>`).join('');
+  const capEl=document.getElementById('lb-caption');
+  if(capEl){
+    const cap=LB.captions[LB.idx]||'';
+    capEl.textContent=cap;
+    capEl.style.opacity=cap?'1':'0';
+  }
 }
 function lbTS(e){LB.touchX=e.touches[0].clientX;LB.dragging=true;LB.dragDX=0;}
 function lbTM(e){if(!LB.dragging)return;LB.dragDX=e.touches[0].clientX-LB.touchX;const vw=Math.min(window.innerWidth,480);const s=document.getElementById('lb-slides');s.style.transition='none';s.style.transform=`translateX(${-LB.idx*vw+LB.dragDX}px)`;if(Math.abs(LB.dragDX)>8)e.preventDefault();}
