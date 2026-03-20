@@ -759,7 +759,10 @@ function initCapture(){ const t=nowObj(); document.getElementById('capture-ts').
 function onProjChange(sel){ document.getElementById('new-proj-wrap').style.display=sel.value==='__new__'?'block':'none'; }
 function getProjName(){ const sel=document.getElementById('proj-select'); return sel.value==='__new__'?(document.getElementById('new-proj-name').value.trim()||'โครงการใหม่'):sel.value; }
 function renderSlots(){
-  const g=document.getElementById('photo-grid'); g.innerHTML='';
+  // photo slots
+  const g=document.getElementById('photo-grid');
+  if(!g) return;
+  g.innerHTML='';
   for(let i=0;i<MAX;i++){
     const s=document.createElement('div');
     s.className='photo-slot'+(S.photos[i]?' filled':'');
@@ -771,30 +774,42 @@ function renderSlots(){
     }
     g.appendChild(s);
   }
+
   const filled=S.photos.filter(Boolean).length;
-  document.getElementById('photo-count-label').textContent=`${filled} / ${MAX} รูป`;
-  // render ref chips
+
+  // count label
+  const pc=document.getElementById('photo-count-label');
+  if(pc) pc.textContent=filled+' / '+MAX+' รูป';
+
+  // ref chips
   const rc=document.getElementById('ref-chips');
   const rh=document.getElementById('ref-hint');
   if(rc){
     if(filled>0){
-      rh.style.display='block';
-      rc.innerHTML=Array.from({length:filled},(_,i)=>
-        `<button class="ref-chip" onclick="insertRef(${i+1})" title="แทรก [รูป${i+1}] ในรายละเอียด">[รูป${i+1}]</button>`
-      ).join('');
+      if(rh) rh.style.display='block';
+      rc.innerHTML='';
+      for(let i=0;i<filled;i++){
+        const btn=document.createElement('button');
+        btn.className='ref-chip';
+        btn.textContent='[รูป'+(i+1)+']';
+        btn.title='แทรก [รูป'+(i+1)+'] ในรายละเอียด';
+        btn.onclick=(function(n){return function(){insertRef(n);};})(i+1);
+        rc.appendChild(btn);
+      }
     }else{
-      rh.style.display='none';
+      if(rh) rh.style.display='none';
       rc.innerHTML='';
     }
   }
+
   // caption inputs
   const capWrap=document.getElementById('photo-captions-wrap');
   const capList=document.getElementById('photo-captions');
   if(capWrap && capList){
     if(filled>0){
       capWrap.style.display='block';
-      // save existing values before clearing
-      capList.querySelectorAll('.caption-input').forEach((inp,i)=>{ S.captions[i]=inp.value; });
+      // save existing typed values
+      capList.querySelectorAll('.caption-input').forEach(function(inp,i){ S.captions[i]=inp.value; });
       capList.innerHTML='';
       for(let i=0;i<filled;i++){
         const row=document.createElement('div');
@@ -803,8 +818,8 @@ function renderSlots(){
         lbl.className='caption-num';
         lbl.textContent='รูป '+(i+1);
         const inp=document.createElement('input');
+        inp.type='text';
         inp.className='caption-input';
-        inp.id='cap-'+i;
         inp.placeholder='คำบรรยายรูปที่ '+(i+1);
         inp.value=S.captions[i]||'';
         row.appendChild(lbl);
