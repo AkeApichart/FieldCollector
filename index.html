@@ -793,13 +793,24 @@ function renderSlots(){
   if(capWrap && capList){
     if(filled>0){
       capWrap.style.display='block';
-      // save current values before re-render
+      // save existing values before clearing
       capList.querySelectorAll('.caption-input').forEach((inp,i)=>{ S.captions[i]=inp.value; });
-      capList.innerHTML=Array.from({length:filled},(_,i)=>`
-        <div class="caption-row">
-          <span class="caption-num">รูป ${i+1}</span>
-          <input class="caption-input" id="cap-${i}" placeholder="คำบรรยายรูปที่ ${i+1}" value="${(S.captions[i]||'').replace(/"/g,'&quot;')}">
-        </div>`).join('');
+      capList.innerHTML='';
+      for(let i=0;i<filled;i++){
+        const row=document.createElement('div');
+        row.className='caption-row';
+        const lbl=document.createElement('span');
+        lbl.className='caption-num';
+        lbl.textContent='รูป '+(i+1);
+        const inp=document.createElement('input');
+        inp.className='caption-input';
+        inp.id='cap-'+i;
+        inp.placeholder='คำบรรยายรูปที่ '+(i+1);
+        inp.value=S.captions[i]||'';
+        row.appendChild(lbl);
+        row.appendChild(inp);
+        capList.appendChild(row);
+      }
     }else{
       capWrap.style.display='none';
       capList.innerHTML='';
