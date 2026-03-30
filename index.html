@@ -199,6 +199,18 @@ textarea.edit-input{resize:none;min-height:120px}
 .caption-input:focus{border-color:var(--accent2)}
 .caption-input::placeholder{color:var(--muted)}
 
+
+/* Rename modal */
+#rename-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:600;display:none;align-items:center;justify-content:center;padding:20px}
+#rename-modal-backdrop.open{display:flex}
+#rename-modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;width:100%;max-width:380px}
+#rename-modal-title{font-size:15px;font-weight:600;margin-bottom:4px}
+#rename-modal-sub{font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:14px}
+#rename-input{width:100%;background:var(--card);border:1px solid var(--accent);border-radius:10px;color:var(--text);font-family:var(--sans);font-size:15px;padding:11px 14px;outline:none}
+.rename-btns{display:flex;gap:8px;margin-top:12px}
+.rename-btn-ok{flex:1;padding:12px;border-radius:10px;border:none;background:var(--accent);color:#000;font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer}
+.rename-btn-cancel{flex:1;padding:12px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text);font-family:var(--sans);font-size:14px;cursor:pointer}
+
 .section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .section-label{font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
 .link-btn{font-size:12px;background:none;border:none;color:var(--accent2);cursor:pointer;font-family:var(--sans)}
@@ -393,6 +405,21 @@ textarea.edit-input{resize:none;min-height:120px}
     <div style="width:36px"></div>
     <div id="lb-dots"></div>
     <button id="lb-download" onclick="lbDownload()">⬇</button>
+  </div>
+</div>
+
+
+<!-- Rename Modal -->
+<div id="rename-modal-backdrop" onclick="closeRenameModal()">
+  <div id="rename-modal" onclick="event.stopPropagation()">
+    <div id="rename-modal-title">แก้ไขชื่อโครงการ</div>
+    <div id="rename-modal-sub"></div>
+    <input id="rename-input" type="text" placeholder="ชื่อโครงการใหม่"
+      onkeydown="if(event.key==='Enter') doRename()">
+    <div class="rename-btns">
+      <button class="rename-btn-cancel" onclick="closeRenameModal()">ยกเลิก</button>
+      <button class="rename-btn-ok" onclick="doRename()">บันทึก</button>
+    </div>
   </div>
 </div>
 
@@ -959,8 +986,9 @@ function renderProjects(){
     <div class="proj-group">
       <div class="proj-group-header">
         <div><div class="proj-group-name">📁 ${proj}</div><div class="proj-group-meta">${entries.length} รายการ · ${entries.reduce((s,e)=>s+(e.photos?.length||0),0)} รูป</div></div>
-        <div style="display:flex;align-items:center;gap:8px">
+        <div style="display:flex;align-items:center;gap:6px">
           <div class="badge blue">${entries.length}</div>
+          <button onclick="openRenameModal('${proj}')" style="width:28px;height:28px;border-radius:8px;border:1px solid rgba(240,165,0,.3);background:rgba(240,165,0,.07);color:var(--accent);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center" title="แก้ไขชื่อโครงการ">✏️</button>
           <button onclick="deleteProject('${proj}')" style="width:28px;height:28px;border-radius:8px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.07);color:var(--danger);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center" title="ลบโครงการ">🗑</button>
         </div>
       </div>
@@ -1250,6 +1278,65 @@ async function exportWord(projName){
     await dbPut('exports',expRec);S.exports[projName]=expRec;
     hideOverlay();
   }catch(err){hideOverlay();showToast('❌ '+err.message,'error');console.error(err);}
+}
+
+
+// ═══════════════════════════════════════════════
+//  Rename Project
+// ═══════════════════════════════════════════════
+let _renameTarget='';
+function openRenameModal(projName){
+  _renameTarget=projName;
+  document.getElementById('rename-modal-sub').textContent='ชื่อปัจจุบัน: '+projName;
+  const inp=document.getElementById('rename-input');
+  inp.value=projName;
+  document.getElementById('rename-modal-backdrop').classList.add('open');
+  setTimeout(()=>{inp.focus();inp.select();},100);
+}
+function closeRenameModal(){
+  document.getElementById('rename-modal-backdrop').classList.remove('open');
+  _renameTarget='';
+}
+async function doRename(){
+  const newName=document.getElementById('rename-input').value.trim();
+  if(!newName){showToast('⚠ ชื่อโครงการห้ามว่าง','error');return;}
+  if(newName===_renameTarget){closeRenameModal();return;}
+  if(S.projects.includes(newName)){showToast('⚠ มีชื่อนี้แล้ว','error');return;}
+  const oldName=_renameTarget;
+  closeRenameModal();
+  showOverlay('กำลังเปลี่ยนชื่อโครงการ...');
+  try{
+    // update all entries
+    const affected=S.entries.filter(e=>e.project===oldName);
+    for(const e of affected){
+      e.project=newName;
+      await dbPut('entries',e);
+    }
+    // update projects store
+    await dbDelete('projects',oldName);
+    await dbPut('projects',{name:newName});
+    // update exports store key if exists
+    if(S.exports[oldName]){
+      const exp={...S.exports[oldName],project:newName};
+      await dbDelete('exports',oldName).catch(()=>{});
+      await dbPut('exports',exp);
+      S.exports[newName]=exp;
+      delete S.exports[oldName];
+    }
+    // update state
+    S.projects=S.projects.map(p=>p===oldName?newName:p);
+    // update proj-select dropdown
+    const sel=document.getElementById('proj-select');
+    for(let i=0;i<sel.options.length;i++){
+      if(sel.options[i].value===oldName){sel.options[i].value=newName;sel.options[i].textContent=newName;break;}
+    }
+    // log
+    const log={time:new Date().toLocaleString('th-TH'),msg:`เปลี่ยนชื่อโครงการ: "${oldName}" → "${newName}"`,type:'blue'};
+    await dbPut('logs',log);S.logs.unshift(log);
+    renderProjects();updateStats();
+    document.getElementById('db-status-label').textContent=`บันทึกแล้ว ${S.entries.length} รายการ`;
+    hideOverlay();showToast(`✓ เปลี่ยนชื่อเป็น "${newName}" แล้ว`,'success');
+  }catch(err){hideOverlay();showToast('❌ '+err.message,'error');}
 }
 
 // ═══════════════════════════════════════════════
