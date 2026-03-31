@@ -1076,6 +1076,11 @@ function startEdit(){
   const e=S.entries.find(x=>x.id===S.currentDetailId);if(!e)return;
   document.getElementById('edit-topic').value=e.topic;
   document.getElementById('edit-detail').value=e.detail||'';
+  // clear stale DOM from previous session before loading new data
+  const ecListPrev=document.getElementById('edit-captions');
+  if(ecListPrev) ecListPrev.innerHTML='';
+  const ecWrapPrev=document.getElementById('edit-captions-wrap');
+  if(ecWrapPrev) ecWrapPrev.style.display='none';
   // copy photos + captions to edit buffer
   S.editPhotos=[...(e.photos||[])];
   S.editCaptions=[...(e.captions||[])];
@@ -1122,13 +1127,20 @@ function renderEditSlots(){
   if(ecWrap && ecList){
     if(filled>0){
       ecWrap.style.display='block';
-      // save current values
-      ecList.querySelectorAll('.caption-input').forEach((inp,i)=>{ S.editCaptions[i]=inp.value; });
-      ecList.innerHTML=Array.from({length:filled},(_,i)=>`
-        <div class="caption-row">
-          <span class="caption-num">รูป ${i+1}</span>
-          <input class="caption-input" id="ecap-${i}" placeholder="คำบรรยายรูปที่ ${i+1} (ไม่บังคับ)" value="${(S.editCaptions[i]||'').replace(/"/g,'&quot;')}">
-        </div>`).join('');
+      // save DOM values only if count matches (re-render during editing, not initial load)
+      const domInputs=ecList.querySelectorAll('.caption-input');
+      if(domInputs.length===filled){
+        domInputs.forEach((inp,i)=>{ S.editCaptions[i]=inp.value; });
+      }
+      // rebuild using DOM API to avoid template literal issues
+      ecList.innerHTML='';
+      for(let i=0;i<filled;i++){
+        const row=document.createElement('div'); row.className='caption-row';
+        const lbl=document.createElement('span'); lbl.className='caption-num'; lbl.textContent='รูป '+(i+1);
+        const inp=document.createElement('input'); inp.type='text'; inp.className='caption-input';
+        inp.placeholder='คำบรรยายรูปที่ '+(i+1); inp.value=S.editCaptions[i]||'';
+        row.appendChild(lbl); row.appendChild(inp); ecList.appendChild(row);
+      }
     }else{
       ecWrap.style.display='none';
       ecList.innerHTML='';
