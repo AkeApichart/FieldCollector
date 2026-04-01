@@ -1232,12 +1232,15 @@ async function saveEdit(){
   // compare photo changes by count + first dataURL of each
   const photosChanged=JSON.stringify((e.photos||[]).map(p=>p.dataURL.slice(0,40)))
     !==JSON.stringify(S.editPhotos.filter(Boolean).map(p=>p.dataURL.slice(0,40)));
-  if(!topicChanged&&!detailChanged&&!photosChanged){cancelEdit();showToast('ไม่มีการเปลี่ยนแปลง','');return;}
+  const captionsChanged=JSON.stringify(e.captions||[])!==JSON.stringify(newCaptions);
+  if(!topicChanged&&!detailChanged&&!photosChanged&&!captionsChanged){cancelEdit();showToast('ไม่มีการเปลี่ยนแปลง','');return;}
   const ts=nowObj();
   const changedFields=[];
   if(topicChanged) changedFields.push('หัวข้อ');
   if(detailChanged) changedFields.push('รายละเอียด');
   if(photosChanged) changedFields.push(`รูปภาพ (${oldPhotoCount}→${newPhotoCount} รูป)`);
+  if(captionsChanged) changedFields.push('คำบรรยายรูป');
+  if(captionsChanged) changedFields.push('คำบรรยายรูป');
   const histEntry={
     ts:ts.display,
     field:changedFields.join(' + '),
