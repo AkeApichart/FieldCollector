@@ -1361,6 +1361,7 @@ async function exportWord(projName){
     const expRec={project:projName,date:t.fn,display:new Date().toLocaleString('th-TH'),fname,exportedAt:new Date().toISOString()};
     await dbPut('exports',expRec);S.exports[projName]=expRec;
     hideOverlay();
+    renderProjects();
   }catch(err){hideOverlay();showToast('❌ '+err.message,'error');console.error(err);}
 }
 
