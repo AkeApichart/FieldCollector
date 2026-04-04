@@ -1071,11 +1071,8 @@ function renderProjects(){
       </div>`;
     el.appendChild(div);
   });
+  updateBanner();
 }
-
-// call updateBanner after every renderProjects
-const _origRenderProjects=renderProjects;
-function renderProjects(){_origRenderProjects();updateBanner();}
 
 function showDetail(id){
   const e=S.entries.find(x=>x.id===id);if(!e)return;
